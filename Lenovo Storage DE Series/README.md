@@ -1,6 +1,6 @@
 # Lenovo Storage DE Series / DE2000H Zabbix Template
 
-[English version](#english) | [Русская версия](#русская-версия)
+[English version](#english-version) | [Русская версия](#русская-версия)
 
 ---
 
@@ -63,8 +63,9 @@
 
 Шаблон находится в процессе практического использования и продолжает дорабатываться. Приветствуются запросы на добавление изменений, сообщения об ошибках и предложения.
 
-## English version
+---
 
+## English version
 
 # Zabbix Template for Lenovo Storage DE2000H / DE Series
 
