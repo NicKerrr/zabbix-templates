@@ -63,6 +63,9 @@
 
 Шаблон находится в процессе практического использования и продолжает дорабатываться. Приветствуются запросы на добавление изменений, сообщения об ошибках и предложения.
 
+## English version
+
+
 # Zabbix Template for Lenovo Storage DE2000H / DE Series
 
 This repository contains a Zabbix template for monitoring Lenovo Storage DE Series storage systems, primarily Lenovo DE2000H, via the controller HTTP API.
