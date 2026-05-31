@@ -12,6 +12,11 @@
                 "uuid": "cd4f837c4d6f49cd870c6caa934b9805",
                 "template": "Reg.ru by HTTP",
                 "name": "Reg.ru by HTTP",
+                "description": "Reg.ru services monitoring via HTTP API. Discovers domains and hosting services, collects creation date, expiration date and service state, and creates alerts for expiration in 60, 30 and 7 days.\n\n\nAuthor: Yaroslav Sharaev https://github.com/NicKerrr/zabbix-templates",
+                "vendor": {
+                    "name": "Yaroslav Sharaev",
+                    "version": "0.9"
+                },
                 "groups": [
                     {
                         "name": "Templates/Cloud"
