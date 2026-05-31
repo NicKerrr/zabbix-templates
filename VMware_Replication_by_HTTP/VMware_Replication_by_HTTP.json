@@ -1,0 +1,995 @@
+{
+    "zabbix_export": {
+        "version": "7.4",
+        "template_groups": [
+            {
+                "uuid": "a571c0d144b14fd4a87a9d9b2aa9fcd6",
+                "name": "Templates/Applications"
+            }
+        ],
+        "templates": [
+            {
+                "uuid": "a30686e9d9ba45d086583cd1c3c36b78",
+                "template": "VMware Replication",
+                "name": "VMware Replication",
+                "description": "VMware Replication monitoring via REST API. Discovers pairings, replicated VMs and replication servers, collects replication status, configuration state, sync metrics, vCenter/VRM status and API collection errors.",
+                "vendor": {
+                    "name": "Yaroslav Sharaev",
+                    "version": "0.8.5"
+                },
+                "groups": [
+                    {
+                        "name": "Templates/Applications"
+                    }
+                ],
+                "items": [
+                    {
+                        "uuid": "e33aaf92b15d4b8c96031dbbf9939e1e",
+                        "name": "Get Pairings",
+                        "type": "SCRIPT",
+                        "key": "vmware.vrm.pairings.get",
+                        "history": "0",
+                        "value_type": "TEXT",
+                        "params": "var VRM = {\n\turl: '{$VRM.URL}',\n\tuser: '{$VMWARE.USERNAME}',\n\tpass: '{$VMWARE.PASSWORD}',\n\tvmware_api_session_id: {},\n\tresult: {},\n\n\tlogin: function () {\n\t\t  var response, request = new HttpRequest();\n\t\t\trequest.setHttpAuth(HTTPAUTH_BASIC, VRM.user, VRM.pass);\n\t\t\trequest.addHeader('Accept: application/json');\n\t\t\trequest.addHeader('Content-Type: application/json');\n\t\t\tresponse = request.post(VRM.url + '/api/rest/vr/v2/session', '');\n\t\t\t\t\n\t\tif (response) {\n\t\t\tVRM.vmware_api_session_id = JSON.parse(response).session_id;\n\t\t\treturn true;\n\t\t}\n\t\treturn false;\n\t },\n\n\tlogout: function () {\n\t\tvar path = '/api/rest/vr/v2/session';\n\t\tvar request = new HttpRequest();\n\t\trequest.addHeader(\"x-dr-session:\" + VRM.vmware_api_session_id);\n\t\trequest.delete(VRM.url + path);\n\t},\n\n\t getPairings: function () {\n\t\tvar response, request = new HttpRequest();\n\t\trequest.setHttpAuth(HTTPAUTH_NONE);\n\t\trequest.addHeader(\"x-dr-session:\" + VRM.vmware_api_session_id);\n\t\tresponse = request.get(VRM.url + '/api/rest/vr/v2/pairings/');\n\t\t\n\t\tif (response) {\n\t\t\tVRM.result = JSON.parse(response);\n\t\t\treturn true;\n\t\t}\n\t\treturn false;\n\t}\n};\n\ntry {\n\tif (VRM.login()) {\n\t\tVRM.getPairings();\n\t} else {\n\t\tVRM.result = 0;\n\t}\n\n\tif (VRM.vmware_api_session_id) {\n\t\tVRM.logout();\n\t}\n} catch (error) {\n\tVRM.result = {error: error.message};\n}\n\nreturn JSON.stringify( VRM.result );",
+                        "parameters": [
+                            {
+                                "name": "pass",
+                                "value": "{$VMWARE.PASSWORD}"
+                            },
+                            {
+                                "name": "url",
+                                "value": "{$VRM.URL}"
+                            },
+                            {
+                                "name": "user",
+                                "value": "{$VMWARE.USERNAME}"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "ed042d77fd43497fa520a05a5dd47dd8",
+                        "name": "Get Replications",
+                        "type": "SCRIPT",
+                        "key": "vmware.vrm.replications.get",
+                        "history": "0",
+                        "value_type": "TEXT",
+                        "params": "var url = '{$VRM.URL}';\nvar user = '{$VMWARE.USERNAME}';\nvar pass = '{$VMWARE.PASSWORD}';\nvar result = {error: \"Unknown error\"};\n\ntry {\n    var request = new HttpRequest();\n    request.setHttpAuth(HTTPAUTH_BASIC, user, pass);\n    request.addHeader('Accept: application/json');\n    request.addHeader('Content-Type: application/json');\n    var response = request.post(url + '/api/rest/vr/v2/session', '');\n    \n    if (!response) {\n        result = {error: \"Login failed\"};\n        throw new Error(\"Login failed\");\n    }\n    \n    var sessionId = JSON.parse(response).session_id;\n    \n    request = new HttpRequest();\n    request.addHeader(\"x-dr-session: \" + sessionId);\n    response = request.get(url + '/api/rest/vr/v2/pairings/');\n    \n    if (!response) {\n        result = {error: \"Failed to get pairings\"};\n        throw new Error(\"Failed to get pairings\");\n    }\n    \n    var jsonData = JSON.parse(response);\n    var pairingIds = [];\n    if (jsonData.list && Array.isArray(jsonData.list)) {\n        for (var i = 0; i < jsonData.list.length; i++) {\n            var pid = jsonData.list[i].pairing_id;\n            if (pid) pairingIds.push(pid);\n        }\n    }\n    \n    if (pairingIds.length === 0) {\n        result = {error: \"No pairing IDs available\"};\n        throw new Error(\"No pairing IDs\");\n    }\n    \n    var allReplications = [];\n    for (var i = 0; i < pairingIds.length; i++) {\n        request = new HttpRequest();\n        request.addHeader(\"x-dr-session: \" + sessionId);\n        var apiUrl = url + '/api/rest/vr/v2/pairings/' + pairingIds[i] + '/replications?extended_info=true';\n        response = request.get(apiUrl);\n        \n        if (response) {\n            jsonData = JSON.parse(response);\n            if (jsonData.list && Array.isArray(jsonData.list)) {\n                allReplications = allReplications.concat(jsonData.list);\n            }\n        }\n    }\n    \n    result = {list: allReplications};\n\n} catch (error) {\n    if (error.message) result = {error: error.message};\n} finally {\n    if (sessionId) {\n        request = new HttpRequest();\n        request.addHeader(\"x-dr-session: \" + sessionId);\n        request.delete(url + '/api/rest/vr/v2/session');\n    }\n}\n\nreturn JSON.stringify(result);",
+                        "parameters": [
+                            {
+                                "name": "pass",
+                                "value": "{$VMWARE.PASSWORD}"
+                            },
+                            {
+                                "name": "url",
+                                "value": "{$VRM.URL}"
+                            },
+                            {
+                                "name": "user",
+                                "value": "{$VMWARE.USERNAME}"
+                            }
+                        ],
+                        "tags": [
+                            {
+                                "tag": "component",
+                                "value": "raw"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "04205f89de1e400abf278808b32cad95",
+                        "name": "Information state error check",
+                        "type": "DEPENDENT",
+                        "key": "vmware.vrm.serverinfo.check",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$..error.first()"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "1d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "vmware.vrm.serverinfo.get"
+                        },
+                        "triggers": [
+                            {
+                                "uuid": "35c47ea189624cdaa5798779dbd50704",
+                                "expression": "last(/VMware Replication/vmware.vrm.serverinfo.check)<>\"none\"",
+                                "name": "VMware Replication: Failed to get Information Data",
+                                "opdata": "Current error: {ITEM.LASTVALUE}",
+                                "priority": "WARNING"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "977f43dfd575424284493a0d4e54ab86",
+                        "name": "Get Information",
+                        "type": "SCRIPT",
+                        "key": "vmware.vrm.serverinfo.get",
+                        "history": "0",
+                        "value_type": "TEXT",
+                        "params": "var url = '{$VRM.URL}';\nvar user = '{$VMWARE.USERNAME}';\nvar pass = '{$VMWARE.PASSWORD}';\nvar result = {error: \"Unknown error\"};\n\ntry {\n    var request = new HttpRequest();\n    request.setHttpAuth(HTTPAUTH_BASIC, user, pass);\n    request.addHeader('Accept: application/json');\n    request.addHeader('Content-Type: application/json');\n    var response = request.post(url + '/api/rest/vr/v2/session', '');\n    \n    if (!response) {\n        result = {error: \"Login failed\"};\n        throw new Error(\"Login failed\");\n    }\n    \n    var sessionId = JSON.parse(response).session_id;\n    \n    request = new HttpRequest();\n    request.addHeader(\"x-dr-session: \" + sessionId);\n    response = request.get(url + '/api/rest/vr/v2/info/');\n    \n    if (!response) {\n        result = {error: \"Failed to get info\"};\n        throw new Error(\"Failed to get info\");\n    }\n    \n\tvar getInfo = JSON.parse(response);\n\n\n    request = new HttpRequest();\n    request.addHeader(\"x-dr-session: \" + sessionId);\n    response = request.get(url + '/api/rest/vr/v2/replication-servers/');\n    \n    if (!response) {\n        result = {error: \"Failed to get replications server info\"};\n        throw new Error(\"Failed to get replications server info\");\n    } \n    \n\tvar getServers = JSON.parse(response);\n\n\tgetInfo.replication_servers = getServers.list;\n\tgetInfo.error = 'none';\n\n    result = [ getInfo ];\n\n} catch (error) {\n    if (error.message) result = {error: error.message};\n} finally {\n    if (sessionId) {\n        request = new HttpRequest();\n        request.addHeader(\"x-dr-session: \" + sessionId);\n        request.delete(url + '/api/rest/vr/v2/session');\n    }\n}\n\nreturn JSON.stringify(result);",
+                        "parameters": [
+                            {
+                                "name": "pass",
+                                "value": "{$VMWARE.PASSWORD}"
+                            },
+                            {
+                                "name": "url",
+                                "value": "{$VRM.URL}"
+                            },
+                            {
+                                "name": "user",
+                                "value": "{$VMWARE.USERNAME}"
+                            }
+                        ],
+                        "tags": [
+                            {
+                                "tag": "component",
+                                "value": "raw"
+                            }
+                        ]
+                    }
+                ],
+                "discovery_rules": [
+                    {
+                        "uuid": "726086e4b3244994948338caf6e0841c",
+                        "name": "Get Pairings Discovery",
+                        "type": "SCRIPT",
+                        "key": "vmware.vrm.pairings.discovery",
+                        "delay": "1h",
+                        "params": "var VRM = {\n\turl: '{$VRM.URL}',\n\tuser: '{$VMWARE.USERNAME}',\n\tpass: '{$VMWARE.PASSWORD}',\n\tvmware_api_session_id: {},\n\tresult: {},\n\n\tlogin: function () {\n\t\t  var response, request = new HttpRequest();\n\t\t\trequest.setHttpAuth(HTTPAUTH_BASIC, VRM.user, VRM.pass);\n\t\t\trequest.addHeader('Accept: application/json');\n\t\t\trequest.addHeader('Content-Type: application/json');\n\t\t\tresponse = request.post(VRM.url + '/api/rest/vr/v2/session', '');\n\t\t\t\t\n\t\tif (response) {\n\t\t\tVRM.vmware_api_session_id = JSON.parse(response).session_id;\n\t\t\treturn true;\n\t\t}\n\t\treturn false;\n\t },\n\n\tlogout: function () {\n\t\tvar path = '/api/rest/vr/v2/session';\n\t\tvar request = new HttpRequest();\n\t\trequest.addHeader(\"x-dr-session:\" + VRM.vmware_api_session_id);\n\t\trequest.delete(VRM.url + path);\n\t},\n\n\t getPairings: function () {\n\t\tvar response, request = new HttpRequest();\n\t\trequest.setHttpAuth(HTTPAUTH_NONE);\n\t\trequest.addHeader(\"x-dr-session:\" + VRM.vmware_api_session_id);\n\t\tresponse = request.get(VRM.url + '/api/rest/vr/v2/pairings/');\n\t\t\n\t\tif (response) {\n\t\t\tVRM.result = JSON.parse(response);\n\t\t\treturn true;\n\t\t}\n\t\treturn false;\n\t}\n};\n\ntry {\n\tif (VRM.login()) {\n\t\tVRM.getPairings();\n\t} else {\n\t\tVRM.result = 0;\n\t}\n\n\tif (VRM.vmware_api_session_id) {\n\t\tVRM.logout();\n\t}\n} catch (error) {\n\tVRM.result = {error: error.message};\n}\n\nreturn JSON.stringify( VRM.result );",
+                        "lifetime_type": "DELETE_NEVER",
+                        "enabled_lifetime_type": "DISABLE_AFTER",
+                        "enabled_lifetime": "3d",
+                        "item_prototypes": [
+                            {
+                                "uuid": "e1a30071023b41a6b847db87fa4aee1d",
+                                "name": "VMware Replication: Pairing Status {#LOCAL.VC.SERVER} to {#REMOTE.VC.SERVER}",
+                                "type": "DEPENDENT",
+                                "key": "vmware.vrm.status[{#REMOTE.VC.SERVER}]",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.list..local_vc_server.server_status.first()"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "vmware.vrm.pairings.get"
+                                }
+                            }
+                        ],
+                        "parameters": [
+                            {
+                                "name": "pass",
+                                "value": "{$VMWARE.PASSWORD}"
+                            },
+                            {
+                                "name": "url",
+                                "value": "{$VRM.URL}"
+                            },
+                            {
+                                "name": "user",
+                                "value": "{$VMWARE.USERNAME}"
+                            }
+                        ],
+                        "lld_macro_paths": [
+                            {
+                                "lld_macro": "{#LOCAL.VC.SERVER}",
+                                "path": "$..local_vc_server.name.first()"
+                            },
+                            {
+                                "lld_macro": "{#PAIRING.ID}",
+                                "path": "$..pairing_id.first()"
+                            },
+                            {
+                                "lld_macro": "{#REMOTE.VC.SERVER}",
+                                "path": "$..remote_vc_server.name.first()"
+                            }
+                        ],
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.list"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "43566ac96c1347749fd837696c28031c",
+                        "name": "Discovery Replication",
+                        "type": "DEPENDENT",
+                        "key": "vmware.vrm.replication.discovery",
+                        "lifetime_type": "DELETE_NEVER",
+                        "enabled_lifetime_type": "DISABLE_AFTER",
+                        "enabled_lifetime": "3d",
+                        "item_prototypes": [
+                            {
+                                "uuid": "d8bfc45e7f1e4e2bbaffda2e910c3868",
+                                "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Configuration Error",
+                                "type": "DEPENDENT",
+                                "key": "vmware.vrm.replications.conf.error[{#REPLICA.VM.NAME}]",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "\"configuration_error\":null",
+                                            "\"configuration_error\":{\"message\": \"none\"}"
+                                        ]
+                                    },
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.list.[?(@.name == \"{#REPLICA.VM.NAME}\")].configuration_error.message.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "1h"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "vmware.vrm.replications.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Replication: Destination",
+                                        "value": "{#REPLICA.TARGET}"
+                                    },
+                                    {
+                                        "tag": "Replication: Source",
+                                        "value": "{#REPLICA.SOURCE}"
+                                    },
+                                    {
+                                        "tag": "Replication: VM Name",
+                                        "value": "{#REPLICA.VM.NAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "8132f96558c640b8846179d336489f0d",
+                                "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Configuration State",
+                                "type": "DEPENDENT",
+                                "key": "vmware.vrm.replications.conf.state[{#REPLICA.VM.NAME}]",
+                                "value_type": "FLOAT",
+                                "trends": "0",
+                                "valuemap": {
+                                    "name": "Status Mapping"
+                                },
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.list.[?(@.name == \"{#REPLICA.VM.NAME}\")].configuration_state.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "OK",
+                                            "1"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "UNKNOWN",
+                                            "4"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "ERROR",
+                                            "31"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "IN_PROGRESS",
+                                            "6"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "vmware.vrm.replications.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Replication: Destination",
+                                        "value": "{#REPLICA.TARGET}"
+                                    },
+                                    {
+                                        "tag": "Replication: Source",
+                                        "value": "{#REPLICA.SOURCE}"
+                                    },
+                                    {
+                                        "tag": "Replication: VM Name",
+                                        "value": "{#REPLICA.VM.NAME}"
+                                    }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "dadff2e5fd1644a195a114f899e936c3",
+                                        "expression": "last(/VMware Replication/vmware.vrm.replications.conf.state[{#REPLICA.VM.NAME}])=31",
+                                        "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Configuration State is ERROR",
+                                        "priority": "AVERAGE",
+                                        "dependencies": [
+                                            {
+                                                "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Configuration State is UNKNOWN",
+                                                "expression": "last(/VMware Replication/vmware.vrm.replications.conf.state[{#REPLICA.VM.NAME}])=4"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "e2c3638fa3554153b1245a19c5b37078",
+                                        "expression": "last(/VMware Replication/vmware.vrm.replications.conf.state[{#REPLICA.VM.NAME}])=4",
+                                        "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Configuration State is UNKNOWN",
+                                        "priority": "AVERAGE"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "d6bcf42199e44923a9540e92010c9c5b",
+                                "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Last Sync Duration",
+                                "type": "DEPENDENT",
+                                "key": "vmware.vrm.replications.lastsyncduration[{#REPLICA.VM.NAME}]",
+                                "value_type": "FLOAT",
+                                "trends": "0",
+                                "units": "s",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.list.[?(@.name == \"{#REPLICA.VM.NAME}\")].last_sync_duration.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "1d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "vmware.vrm.replications.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Replication: Destination",
+                                        "value": "{#REPLICA.TARGET}"
+                                    },
+                                    {
+                                        "tag": "Replication: Source",
+                                        "value": "{#REPLICA.SOURCE}"
+                                    },
+                                    {
+                                        "tag": "Replication: VM Name",
+                                        "value": "{#REPLICA.VM.NAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "35e7753925934cbb9aeaf998d0b1d9f5",
+                                "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Last Sync Size",
+                                "type": "DEPENDENT",
+                                "key": "vmware.vrm.replications.lastsyncsize[{#REPLICA.VM.NAME}]",
+                                "value_type": "FLOAT",
+                                "trends": "0",
+                                "units": "B",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.list.[?(@.name == \"{#REPLICA.VM.NAME}\")].last_sync_size.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "1d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "vmware.vrm.replications.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Replication: Destination",
+                                        "value": "{#REPLICA.TARGET}"
+                                    },
+                                    {
+                                        "tag": "Replication: Source",
+                                        "value": "{#REPLICA.SOURCE}"
+                                    },
+                                    {
+                                        "tag": "Replication: VM Name",
+                                        "value": "{#REPLICA.VM.NAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "bfd4a58a12b5448bb879cf24bab00814",
+                                "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Last Sync Time",
+                                "type": "DEPENDENT",
+                                "key": "vmware.vrm.replications.lastsynctime[{#REPLICA.VM.NAME}]",
+                                "value_type": "FLOAT",
+                                "trends": "0",
+                                "units": "unixtime",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.list.[?(@.name == \"{#REPLICA.VM.NAME}\")].last_sync_time.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "MULTIPLIER",
+                                        "parameters": [
+                                            "0.001"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "1d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "vmware.vrm.replications.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Replication: Destination",
+                                        "value": "{#REPLICA.TARGET}"
+                                    },
+                                    {
+                                        "tag": "Replication: Source",
+                                        "value": "{#REPLICA.SOURCE}"
+                                    },
+                                    {
+                                        "tag": "Replication: VM Name",
+                                        "value": "{#REPLICA.VM.NAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "dfe3fbdd7c694dc8b9c89a65a785581a",
+                                "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Network Compression",
+                                "type": "DEPENDENT",
+                                "key": "vmware.vrm.replications.net.compression[{#REPLICA.VM.NAME}]",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.list.[?(@.name == \"{#REPLICA.VM.NAME}\")].network_compression_enabled.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "1h"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "vmware.vrm.replications.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Replication: Destination",
+                                        "value": "{#REPLICA.TARGET}"
+                                    },
+                                    {
+                                        "tag": "Replication: Source",
+                                        "value": "{#REPLICA.SOURCE}"
+                                    },
+                                    {
+                                        "tag": "Replication: VM Name",
+                                        "value": "{#REPLICA.VM.NAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "3145d722f6b9489bb18715110b62a5b0",
+                                "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Status Replication",
+                                "type": "DEPENDENT",
+                                "key": "vmware.vrm.replications.status[{#REPLICA.VM.NAME}]",
+                                "value_type": "FLOAT",
+                                "trends": "0",
+                                "valuemap": {
+                                    "name": "Status Mapping"
+                                },
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.list.[?(@.name == \"{#REPLICA.VM.NAME}\")].status.status.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "ERROR_RPO_VIOLATION",
+                                            "30"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "SYNC_RPO_VIOLATION",
+                                            "11"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "FULL_SYNC_RPO_VIOLATION",
+                                            "13"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "INITIAL_FULL_SYNC",
+                                            "3"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "NOT_ACTIVE_RPO_VIOLATION",
+                                            "12"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "RECOVERING",
+                                            "15"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "RECOVERED",
+                                            "16"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "DISK_RESIZING",
+                                            "17"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "CONFIGURING",
+                                            "18"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "RPO_VIOLATION",
+                                            "10"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "FULL_SYNC",
+                                            "9"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "NOT_ACTIVE",
+                                            "5"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "SYNC",
+                                            "2"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "MOVING",
+                                            "14"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "UNKNOWN",
+                                            "4"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "PAUSED",
+                                            "7"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "ERROR",
+                                            "31"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "OK",
+                                            "1"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "vmware.vrm.replications.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Replication: Destination",
+                                        "value": "{#REPLICA.TARGET}"
+                                    },
+                                    {
+                                        "tag": "Replication: Source",
+                                        "value": "{#REPLICA.SOURCE}"
+                                    },
+                                    {
+                                        "tag": "Replication: VM Name",
+                                        "value": "{#REPLICA.VM.NAME}"
+                                    }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "8aaee66e971b45a4b9701a09bbcf990b",
+                                        "expression": "last(/VMware Replication/vmware.vrm.replications.status[{#REPLICA.VM.NAME}])=31",
+                                        "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Status Replication is ERROR",
+                                        "priority": "HIGH",
+                                        "dependencies": [
+                                            {
+                                                "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Status Replication is ERROR RPO VIOLATION",
+                                                "expression": "last(/VMware Replication/vmware.vrm.replications.status[{#REPLICA.VM.NAME}])=30"
+                                            },
+                                            {
+                                                "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Status Replication is INITIAL FULL SYNC",
+                                                "expression": "last(/VMware Replication/vmware.vrm.replications.status[{#REPLICA.VM.NAME}])=3"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "4366c79413f04217856f1bd6781db334",
+                                        "expression": "last(/VMware Replication/vmware.vrm.replications.status[{#REPLICA.VM.NAME}])=30",
+                                        "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Status Replication is ERROR RPO VIOLATION",
+                                        "priority": "HIGH",
+                                        "dependencies": [
+                                            {
+                                                "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Status Replication is INITIAL FULL SYNC",
+                                                "expression": "last(/VMware Replication/vmware.vrm.replications.status[{#REPLICA.VM.NAME}])=3"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "823448df4af248acbab2c55bfbe1007c",
+                                        "expression": "last(/VMware Replication/vmware.vrm.replications.status[{#REPLICA.VM.NAME}])=3",
+                                        "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Status Replication is INITIAL FULL SYNC",
+                                        "priority": "WARNING"
+                                    },
+                                    {
+                                        "uuid": "faac886ae1324d97a35e05fd16ec6033",
+                                        "expression": "last(/VMware Replication/vmware.vrm.replications.status[{#REPLICA.VM.NAME}])>=4 and last(/VMware Replication/vmware.vrm.replications.status[{#REPLICA.VM.NAME}])<=18",
+                                        "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Status Replication is not OK",
+                                        "priority": "AVERAGE",
+                                        "dependencies": [
+                                            {
+                                                "name": "VMware Replication: VM [{#REPLICA.VM.NAME}] Status Replication is INITIAL FULL SYNC",
+                                                "expression": "last(/VMware Replication/vmware.vrm.replications.status[{#REPLICA.VM.NAME}])=3"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "vmware.vrm.replications.get"
+                        },
+                        "lld_macro_paths": [
+                            {
+                                "lld_macro": "{#REPLICA.SOURCE}",
+                                "path": "$..source_site_name.first()"
+                            },
+                            {
+                                "lld_macro": "{#REPLICA.TARGET}",
+                                "path": "$..target_site_name.first()"
+                            },
+                            {
+                                "lld_macro": "{#REPLICA.VM.NAME}",
+                                "path": "$..name.first()"
+                            }
+                        ],
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.list"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "b3ef29e6036a42329ccc8f367543876e",
+                        "name": "Discovery Servers",
+                        "type": "DEPENDENT",
+                        "key": "vmware.vrm.server.get",
+                        "lifetime_type": "DELETE_NEVER",
+                        "enabled_lifetime_type": "DISABLE_NEVER",
+                        "item_prototypes": [
+                            {
+                                "uuid": "1830f380d9964689a6d7aee338563481",
+                                "name": "VMware Replication: VRM [{#REPLICATION.VRM.SERVER}] Replication Count",
+                                "type": "DEPENDENT",
+                                "key": "vmware.vrm.replication.count[{#REPLICATION.VRM.SERVER}]",
+                                "value_type": "FLOAT",
+                                "trends": "0",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$..replication_servers.[?(@.name == \"{#REPLICATION.VRM.SERVER}\")].replication_count.first()"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "vmware.vrm.serverinfo.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Replication: VRM",
+                                        "value": "{#REPLICATION.VRM.SERVER}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "e219a18fd9514fba8b6c6f3cfc84ec63",
+                                "name": "VMware Replication: VC [{#REPLICATION.VC.SERVER}] Status",
+                                "type": "DEPENDENT",
+                                "key": "vmware.vrm.vc.status[{#REPLICATION.VC.SERVER}]",
+                                "value_type": "FLOAT",
+                                "trends": "0",
+                                "valuemap": {
+                                    "name": "Status Mapping"
+                                },
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$..[?(@.name == \"{#REPLICATION.VC.SERVER}\")].server_status.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "OK",
+                                            "1"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "WARNING",
+                                            "19"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "ERROR",
+                                            "31"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "vmware.vrm.serverinfo.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Replication: VC",
+                                        "value": "{#REPLICATION.VC.SERVER}"
+                                    }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "a730d8d3fa364b50a47a6c4d93abe869",
+                                        "expression": "last(/VMware Replication/vmware.vrm.vc.status[{#REPLICATION.VC.SERVER}])=31",
+                                        "name": "VMware Replication: VC [{#REPLICATION.VC.SERVER}] Status is ERROR",
+                                        "priority": "HIGH",
+                                        "dependencies": [
+                                            {
+                                                "name": "VMware Replication: VC [{#REPLICATION.VC.SERVER}] Status is WARNING",
+                                                "expression": "last(/VMware Replication/vmware.vrm.vc.status[{#REPLICATION.VC.SERVER}])=19"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "ca2dc54e86854089a271c69815fe361f",
+                                        "expression": "last(/VMware Replication/vmware.vrm.vc.status[{#REPLICATION.VC.SERVER}])=19",
+                                        "name": "VMware Replication: VC [{#REPLICATION.VC.SERVER}] Status is WARNING",
+                                        "priority": "AVERAGE"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "160769a83fbe405e96613c4cfc075884",
+                                "name": "VMware Replication: VRM [{#REPLICATION.VRM.SERVER}] Connected State",
+                                "type": "DEPENDENT",
+                                "key": "vmware.vrm.vrm.state[{#REPLICATION.VRM.SERVER}]",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$..replication_servers.[?(@.name == \"{#REPLICATION.VRM.SERVER}\")].connected.first()"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "vmware.vrm.serverinfo.get"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Replication: VRM",
+                                        "value": "{#REPLICATION.VRM.SERVER}"
+                                    }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "vmware.vrm.serverinfo.get"
+                        },
+                        "lld_macro_paths": [
+                            {
+                                "lld_macro": "{#REPLICATION.VC.SERVER}",
+                                "path": "$..vc_name.first()"
+                            },
+                            {
+                                "lld_macro": "{#REPLICATION.VRM.SERVER}",
+                                "path": "$..replication_servers..name.first()"
+                            }
+                        ]
+                    }
+                ],
+                "tags": [
+                    {
+                        "tag": "class",
+                        "value": "software"
+                    },
+                    {
+                        "tag": "target",
+                        "value": "vmware"
+                    },
+                    {
+                        "tag": "target",
+                        "value": "vmware-replication"
+                    }
+                ],
+                "valuemaps": [
+                    {
+                        "uuid": "68c95b9f0fb645ec98bf581f28672dad",
+                        "name": "Status Mapping",
+                        "mappings": [
+                            {
+                                "value": "1",
+                                "newvalue": "OK"
+                            },
+                            {
+                                "value": "2",
+                                "newvalue": "SYNC"
+                            },
+                            {
+                                "value": "3",
+                                "newvalue": "INITIAL_FULL_SYNC"
+                            },
+                            {
+                                "value": "4",
+                                "newvalue": "UNKNOWN"
+                            },
+                            {
+                                "value": "5",
+                                "newvalue": "NOT_ACTIVE"
+                            },
+                            {
+                                "value": "6",
+                                "newvalue": "IN_PROGRESS"
+                            },
+                            {
+                                "value": "7",
+                                "newvalue": "PAUSED"
+                            },
+                            {
+                                "value": "9",
+                                "newvalue": "FULL_SYNC"
+                            },
+                            {
+                                "value": "10",
+                                "newvalue": "RPO_VIOLATION"
+                            },
+                            {
+                                "value": "11",
+                                "newvalue": "SYNC_RPO_VIOLATION"
+                            },
+                            {
+                                "value": "12",
+                                "newvalue": "NOT_ACTIVE_RPO_VIOLATION"
+                            },
+                            {
+                                "value": "13",
+                                "newvalue": "FULL_SYNC_RPO_VIOLATION"
+                            },
+                            {
+                                "value": "14",
+                                "newvalue": "MOVING"
+                            },
+                            {
+                                "value": "15",
+                                "newvalue": "RECOVERING"
+                            },
+                            {
+                                "value": "16",
+                                "newvalue": "RECOVERED"
+                            },
+                            {
+                                "value": "17",
+                                "newvalue": "DISK_RESIZING"
+                            },
+                            {
+                                "value": "18",
+                                "newvalue": "CONFIGURING"
+                            },
+                            {
+                                "value": "19",
+                                "newvalue": "WARNING"
+                            },
+                            {
+                                "value": "30",
+                                "newvalue": "ERROR_RPO_VIOLATION"
+                            },
+                            {
+                                "value": "31",
+                                "newvalue": "ERROR"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
