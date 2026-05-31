@@ -35,7 +35,7 @@
 - Zabbix 6.4 или выше
 - Доступ Zabbix Server или Zabbix Proxy к https://api.reg.ru
 - Учетная запись Reg.ru
-- Доступ к Reg.ru API
+- Доступ к Reg.ru API (подробнее: https://help.reg.ru/support/partneram/reg-api/kakiye-ogranicheniya-yest-pri-rabote-s-reg-api)
 - Логин и пароль/API password для выполнения API-запросов
 
 # Макросы
@@ -81,6 +81,7 @@ Data collection → Templates → Import
 - Привяжите к хосту шаблон:
 Reg.ru by HTTP
 - Укажите макросы {$USERNAME} и {$API.PASSWORD}.
+- Добавьте адрес, с которого будут идти обращения к API (подробнее: https://help.reg.ru/support/partneram/reg-api/kakiye-ogranicheniya-yest-pri-rabote-s-reg-api) 
 - Убедитесь, что Zabbix Server или Zabbix Proxy имеет доступ к https://api.reg.ru.
 - Дождитесь выполнения low-level discovery rules.
 
