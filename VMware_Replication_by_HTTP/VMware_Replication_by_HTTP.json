@@ -12,7 +12,7 @@
                 "uuid": "a30686e9d9ba45d086583cd1c3c36b78",
                 "template": "VMware Replication",
                 "name": "VMware Replication",
-                "description": "VMware Replication monitoring via REST API. Discovers pairings, replicated VMs and replication servers, collects replication status, configuration state, sync metrics, vCenter/VRM status and API collection errors.",
+                "description": "VMware Replication monitoring via REST API. Discovers pairings, replicated VMs and replication servers, collects replication status, configuration state, sync metrics, vCenter/VRM status and API collection errors.\n\n\nAuthor: Yaroslav Sharaev https://github.com/NicKerrr/zabbix-templates",
                 "vendor": {
                     "name": "Yaroslav Sharaev",
                     "version": "0.8.5"
