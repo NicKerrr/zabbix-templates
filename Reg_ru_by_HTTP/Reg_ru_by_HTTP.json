@@ -1,0 +1,415 @@
+{
+    "zabbix_export": {
+        "version": "7.4",
+        "template_groups": [
+            {
+                "uuid": "c2c162144c2d4c5491c8801193af4945",
+                "name": "Templates/Cloud"
+            }
+        ],
+        "templates": [
+            {
+                "uuid": "cd4f837c4d6f49cd870c6caa934b9805",
+                "template": "Reg.ru by HTTP",
+                "name": "Reg.ru by HTTP",
+                "groups": [
+                    {
+                        "name": "Templates/Cloud"
+                    }
+                ],
+                "items": [
+                    {
+                        "uuid": "485141a0eddb4cc6bcf174961a3b0414",
+                        "name": "Get Raw Domain Data",
+                        "type": "HTTP_AGENT",
+                        "key": "reg.raw.domain.data",
+                        "delay": "10m",
+                        "history": "0",
+                        "value_type": "TEXT",
+                        "url": "https://api.reg.ru/api/regru2/service/get_list",
+                        "posts": "username={$USERNAME}&password={$API.PASSWORD}&servtype=domain",
+                        "headers": [
+                            {
+                                "name": "Content-Type",
+                                "value": "application/x-www-form-urlencoded"
+                            }
+                        ],
+                        "request_method": "POST"
+                    },
+                    {
+                        "uuid": "512d6b8c8e88437fa01b7b049e0a092e",
+                        "name": "Get Raw Hosting Data",
+                        "type": "HTTP_AGENT",
+                        "key": "reg.raw.hosting.data",
+                        "delay": "10m",
+                        "history": "0",
+                        "value_type": "TEXT",
+                        "url": "https://api.reg.ru/api/regru2/service/get_list",
+                        "posts": "username={$USERNAME}&password={$API.PASSWORD}&servtype=srv_hosting_ispmgr",
+                        "headers": [
+                            {
+                                "name": "Content-Type",
+                                "value": "application/x-www-form-urlencoded"
+                            }
+                        ],
+                        "request_method": "POST"
+                    }
+                ],
+                "discovery_rules": [
+                    {
+                        "uuid": "a73cf47397034f6e9dc59241a3eff402",
+                        "name": "Get domain list",
+                        "type": "DEPENDENT",
+                        "key": "reg.domain.list",
+                        "item_prototypes": [
+                            {
+                                "uuid": "7daf76e907774f18ae0ab7866a638aa8",
+                                "name": "Domain [{#DOMAIN}]: Creation Date",
+                                "type": "DEPENDENT",
+                                "key": "reg.domain.creation.date.[{#DOMAIN}]",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.answer.services"
+                                        ]
+                                    },
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.[?(@.dname == '{#DOMAIN}')].creation_date.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "10d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "reg.raw.domain.data"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Domain",
+                                        "value": "{#DOMAIN}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "a40faad6b4e34309bcc38d7052785c1d",
+                                "name": "Domain [{#DOMAIN}]: Expiration Date",
+                                "type": "DEPENDENT",
+                                "key": "reg.domain.expiration.date.[{#DOMAIN}]",
+                                "trends": "0",
+                                "units": "unixtime",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.answer.services"
+                                        ]
+                                    },
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.[?(@.dname == '{#DOMAIN}')].expiration_date.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "JAVASCRIPT",
+                                        "parameters": [
+                                            "var p = value.trim().split('-');\n\nif (p.length !== 3) {\n    throw 'Invalid date format: ' + value;\n}\n\nvar year = parseInt(p[0], 10);\nvar month = parseInt(p[1], 10) - 1; \nvar day = parseInt(p[2], 10);\n\nreturn Math.floor(Date.UTC(year, month, day) / 1000);"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "1d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "reg.raw.domain.data"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Domain",
+                                        "value": "{#DOMAIN}"
+                                    }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "eb650a9681b9493bac34eee9a4974821",
+                                        "expression": "last(/Reg.ru by HTTP/reg.domain.expiration.date.[{#DOMAIN}])  - now() <= 7d",
+                                        "name": "Domain [{#DOMAIN}]: expires in 7 days",
+                                        "priority": "AVERAGE"
+                                    },
+                                    {
+                                        "uuid": "af1c02e3916e49d3992abfc7eed922dc",
+                                        "expression": "last(/Reg.ru by HTTP/reg.domain.expiration.date.[{#DOMAIN}])  - now() <= 30d",
+                                        "name": "Domain [{#DOMAIN}]: expires in 30 days",
+                                        "priority": "WARNING",
+                                        "dependencies": [
+                                            {
+                                                "name": "Domain [{#DOMAIN}]: expires in 7 days",
+                                                "expression": "last(/Reg.ru by HTTP/reg.domain.expiration.date.[{#DOMAIN}])  - now() <= 7d"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "05c1db7d70834171886d3d2236fbeffa",
+                                        "expression": "last(/Reg.ru by HTTP/reg.domain.expiration.date.[{#DOMAIN}])  - now() <= 60d",
+                                        "name": "Domain [{#DOMAIN}]: expires in 60 days",
+                                        "priority": "INFO",
+                                        "dependencies": [
+                                            {
+                                                "name": "Domain [{#DOMAIN}]: expires in 30 days",
+                                                "expression": "last(/Reg.ru by HTTP/reg.domain.expiration.date.[{#DOMAIN}])  - now() <= 30d"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "7f7a2f37796943d1962469bd46795084",
+                                "name": "Domain [{#DOMAIN}]: State",
+                                "type": "DEPENDENT",
+                                "key": "reg.domain.state.[{#DOMAIN}]",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.answer.services"
+                                        ]
+                                    },
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.[?(@.dname == '{#DOMAIN}')].state.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "1d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "reg.raw.domain.data"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Domain",
+                                        "value": "{#DOMAIN}"
+                                    }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "reg.raw.domain.data"
+                        },
+                        "lld_macro_paths": [
+                            {
+                                "lld_macro": "{#DOMAIN}",
+                                "path": "$..dname.first()"
+                            }
+                        ],
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.answer.services"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "4918a35b3a6c4ff789d32056cd16902d",
+                        "name": "Get hosting list",
+                        "type": "DEPENDENT",
+                        "key": "reg.hosting.list",
+                        "item_prototypes": [
+                            {
+                                "uuid": "99fef240789a42dd9cded243e4c11fc8",
+                                "name": "Hosting [{#HOSTING}]: Creation Date",
+                                "type": "DEPENDENT",
+                                "key": "reg.hosting.creation.date.[{#HOSTING}]",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.answer.services"
+                                        ]
+                                    },
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.[?(@.subtype == '{#HOSTING}')].creation_date.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "10d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "reg.raw.hosting.data"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Hosting",
+                                        "value": "{#HOSTING}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "3fcfdc90a42a49e0b85ae929e25138fe",
+                                "name": "Hosting [{#HOSTING}]: Expiration Date",
+                                "type": "DEPENDENT",
+                                "key": "reg.hosting.expiration.date.[{#HOSTING}]",
+                                "trends": "0",
+                                "units": "unixtime",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.answer.services"
+                                        ]
+                                    },
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.[?(@.subtype == '{#HOSTING}')].expiration_date.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "JAVASCRIPT",
+                                        "parameters": [
+                                            "var p = value.trim().split('-');\n\nif (p.length !== 3) {\n    throw 'Invalid date format: ' + value;\n}\n\nvar year = parseInt(p[0], 10);\nvar month = parseInt(p[1], 10) - 1; \nvar day = parseInt(p[2], 10);\n\nreturn Math.floor(Date.UTC(year, month, day) / 1000);"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "1d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "reg.raw.hosting.data"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Hosting",
+                                        "value": "{#HOSTING}"
+                                    }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "632db726beba47b5a9f297a20653c174",
+                                        "expression": "last(/Reg.ru by HTTP/reg.hosting.expiration.date.[{#HOSTING}]) - now() <= 7d",
+                                        "name": "Hosting [{#HOSTING}]: expires in 7 days",
+                                        "priority": "AVERAGE"
+                                    },
+                                    {
+                                        "uuid": "f6c61189cedc430fbf083ba986b3ff3d",
+                                        "expression": "last(/Reg.ru by HTTP/reg.hosting.expiration.date.[{#HOSTING}]) - now() <= 30d",
+                                        "name": "Hosting [{#HOSTING}]: expires in 30 days",
+                                        "priority": "WARNING",
+                                        "dependencies": [
+                                            {
+                                                "name": "Hosting [{#HOSTING}]: expires in 7 days",
+                                                "expression": "last(/Reg.ru by HTTP/reg.hosting.expiration.date.[{#HOSTING}]) - now() <= 7d"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "087a618f58cf475ab1793e7f895cfadd",
+                                        "expression": "last(/Reg.ru by HTTP/reg.hosting.expiration.date.[{#HOSTING}]) - now() <= 60d",
+                                        "name": "Hosting [{#HOSTING}]: expires in 60 days",
+                                        "priority": "INFO",
+                                        "dependencies": [
+                                            {
+                                                "name": "Hosting [{#HOSTING}]: expires in 30 days",
+                                                "expression": "last(/Reg.ru by HTTP/reg.hosting.expiration.date.[{#HOSTING}]) - now() <= 30d"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "547425d31b8a468a9eb78f4fa59d5c7c",
+                                "name": "Hosting [{#HOSTING}]: State",
+                                "type": "DEPENDENT",
+                                "key": "reg.hosting.state.[{#HOSTING}]",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.answer.services"
+                                        ]
+                                    },
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.[?(@.subtype == '{#HOSTING}')].state.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "1d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "reg.raw.hosting.data"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Hosting",
+                                        "value": "{#HOSTING}"
+                                    }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "reg.raw.hosting.data"
+                        },
+                        "lld_macro_paths": [
+                            {
+                                "lld_macro": "{#HOSTING}",
+                                "path": "$..subtype.first()"
+                            }
+                        ],
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.answer.services"
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "macros": [
+                    {
+                        "macro": "{$API.PASSWORD}"
+                    },
+                    {
+                        "macro": "{$USERNAME}"
+                    }
+                ]
+            }
+        ]
+    }
+}
