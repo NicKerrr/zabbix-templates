@@ -45,7 +45,7 @@
 | Macro | Description |
 |---|---|
 | `{$USERNAME}` | Имя пользователя Reg.ru |
-| `{$API.PASSWORD}	` | Пароль или API password пользователя Reg.ru |
+| `{$API.PASSWORD}` | Пароль или API password пользователя Reg.ru |
 
 # Используемый API
 
