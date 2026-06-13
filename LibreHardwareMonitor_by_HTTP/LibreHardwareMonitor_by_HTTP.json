@@ -1,0 +1,811 @@
+{
+    "zabbix_export": {
+        "version": "7.4",
+        "template_groups": [
+            {
+                "uuid": "7df96b18c230490a9a0a9e2307226338",
+                "name": "Templates"
+            }
+        ],
+        "templates": [
+            {
+                "uuid": "6b9b98201c974898a440b78d210184c4",
+                "template": "LibreHardwareMonitor by HTTP",
+                "name": "LibreHardwareMonitor by HTTP",
+                "description": "LibreHardwareMonitor monitoring via HTTP API. Discovers CPU, GPU, NVMe, HDD/SSD temperature sensors and fan speed sensors, collects hardware metrics from data.json and creates temperature threshold triggers.\n\n\nAuthor: Yaroslav Sharaev https://github.com/NicKerrr/zabbix-templates",
+                "vendor": {
+                    "name": "Yaroslav Sharaev",
+                    "version": "0.8.0"
+                },
+                "groups": [
+                    {
+                        "name": "Templates"
+                    }
+                ],
+                "items": [
+                    {
+                        "uuid": "25c7e287a9b6411c9a77be3ac69045eb",
+                        "name": "LHM Raw Data",
+                        "type": "HTTP_AGENT",
+                        "key": "lhm.raw.data",
+                        "delay": "10s",
+                        "history": "0",
+                        "value_type": "TEXT",
+                        "authtype": "BASIC",
+                        "username": "{$LHM.USER}",
+                        "password": "{$LHM.PASSWORD}",
+                        "url": "{$LHM.URL}/data.json",
+                        "headers": [
+                            {
+                                "name": "content-type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "tags": [
+                            {
+                                "tag": "Application",
+                                "value": "LHM"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "raw"
+                            }
+                        ]
+                    }
+                ],
+                "discovery_rules": [
+                    {
+                        "uuid": "45e20291fa8c4c7c873fb29a082ca11a",
+                        "name": "Get CPU",
+                        "type": "DEPENDENT",
+                        "key": "lhm.get.cpu",
+                        "item_prototypes": [
+                            {
+                                "uuid": "79a8341a738d48289204cdc029a3a03b",
+                                "name": "Hardware: CPU Temperature [{#CPU.TEMP.NAME}] in \u00b0C",
+                                "type": "DEPENDENT",
+                                "key": "lhm.cpu.temp[\"{#CPU.TEMP.ID}\"]",
+                                "trends": "0",
+                                "units": "\u00b0C",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.Children[0].Children[?(@.HardwareId =~ \"^/(intelcpu|amdcpu)/[0-9]+$\")].Children.[?(@.Text == \"Temperatures\")].Children.[?(@.SensorId == \"{#CPU.TEMP.ID}\")].Value.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            ",",
+                                            "."
+                                        ]
+                                    },
+                                    {
+                                        "type": "RTRIM",
+                                        "parameters": [
+                                            " \u00b0C"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "lhm.raw.data"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "LHM"
+                                    },
+                                    {
+                                        "tag": "CPU",
+                                        "value": "{#CPU.TEMP.NAME}"
+                                    },
+                                    {
+                                        "tag": "Hardware",
+                                        "value": "CPU"
+                                    }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "c06c0d029fbc4dbeaa8b15674716548d",
+                                        "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.cpu.temp[\"{#CPU.TEMP.ID}\"],5m)>{$CPU.TEMP.AVERAGE}",
+                                        "name": "Hardware: CPU [{#CPU.TEMP.NAME}] temperature is average",
+                                        "discover": "NO_DISCOVER",
+                                        "priority": "AVERAGE",
+                                        "dependencies": [
+                                            {
+                                                "name": "Hardware: CPU [{#CPU.TEMP.NAME}] temperature is high",
+                                                "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.cpu.temp[\"{#CPU.TEMP.ID}\"],5m)>{$CPU.TEMP.HIGH}"
+                                            }
+                                        ],
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "LHM"
+                                            },
+                                            {
+                                                "tag": "Hardware",
+                                                "value": "CPU"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "586218d7d03f4a75a425c9b2eca4c34b",
+                                        "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.cpu.temp[\"{#CPU.TEMP.ID}\"],5m)>{$CPU.TEMP.HIGH}",
+                                        "name": "Hardware: CPU [{#CPU.TEMP.NAME}] temperature is high",
+                                        "discover": "NO_DISCOVER",
+                                        "priority": "HIGH",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "LHM"
+                                            },
+                                            {
+                                                "tag": "Hardware",
+                                                "value": "CPU"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "c0c7ed695bfb4427b32753ec8e4e3ac4",
+                                        "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.cpu.temp[\"{#CPU.TEMP.ID}\"],5m)>{$CPU.TEMP.WARNING}",
+                                        "name": "Hardware: CPU [{#CPU.TEMP.NAME}] temperature is warning",
+                                        "discover": "NO_DISCOVER",
+                                        "priority": "WARNING",
+                                        "dependencies": [
+                                            {
+                                                "name": "Hardware: CPU [{#CPU.TEMP.NAME}] temperature is high",
+                                                "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.cpu.temp[\"{#CPU.TEMP.ID}\"],5m)>{$CPU.TEMP.HIGH}"
+                                            }
+                                        ],
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "LHM"
+                                            },
+                                            {
+                                                "tag": "Hardware",
+                                                "value": "CPU"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "lhm.raw.data"
+                        },
+                        "lld_macro_paths": [
+                            {
+                                "lld_macro": "{#CPU.TEMP.ID}",
+                                "path": "$.SensorId"
+                            },
+                            {
+                                "lld_macro": "{#CPU.TEMP.NAME}",
+                                "path": "$.Text"
+                            }
+                        ],
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.Children[0].Children[?(@.HardwareId =~ \"^/(intelcpu|amdcpu)/[0-9]+$\")].Children[?(@.Text == \"Temperatures\")].Children[*]"
+                                ]
+                            }
+                        ],
+                        "overrides": [
+                            {
+                                "name": "Create CPU main temperature trigger",
+                                "step": "1",
+                                "filter": {
+                                    "conditions": [
+                                        {
+                                            "macro": "{#CPU.TEMP.NAME}",
+                                            "value": "^\\s*(CPU Package|Core \\(Tctl/Tdie\\))\\s*$"
+                                        }
+                                    ]
+                                },
+                                "operations": [
+                                    {
+                                        "operationobject": "TRIGGER_PROTOTYPE",
+                                        "operator": "LIKE",
+                                        "value": "temperature is",
+                                        "discover": "DISCOVER"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "3b077785d4d34ed8a2a408824e2ab1c1",
+                        "name": "Get Drive",
+                        "type": "DEPENDENT",
+                        "key": "lhm.get.drive",
+                        "item_prototypes": [
+                            {
+                                "uuid": "909be8e2f16643e6b2664317b058e6a5",
+                                "name": "Hardware: Drive [{#LHM.DRIVE.NAME}] Temperature in \u00b0C",
+                                "type": "DEPENDENT",
+                                "key": "lhm.drive.temp[\"{#LHM.DRIVE.ID}\"]",
+                                "trends": "0",
+                                "units": "\u00b0C",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.Children..Children.[?(@.Text == \"{#LHM.DRIVE.NAME}\")].Children.[?(@.Text == \"Temperatures\")].Children.[?(@.Text == \"Temperature\")].Value.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            ",",
+                                            "."
+                                        ]
+                                    },
+                                    {
+                                        "type": "TRIM",
+                                        "parameters": [
+                                            " \u00b0C"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "lhm.raw.data"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "LHM"
+                                    },
+                                    {
+                                        "tag": "Hardware",
+                                        "value": "HDD"
+                                    },
+                                    {
+                                        "tag": "HDD",
+                                        "value": "{#LHM.DRIVE.NAME}"
+                                    }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "20d443840051423d8c2f17c159fb61bc",
+                                        "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.drive.temp[\"{#LHM.DRIVE.ID}\"],5m)>{$DRIVE.TEMP.AVERAGE}",
+                                        "name": "Hardware: Drive [{#LHM.DRIVE.NAME}] temperature is average",
+                                        "priority": "AVERAGE",
+                                        "dependencies": [
+                                            {
+                                                "name": "Hardware: Drive [{#LHM.DRIVE.NAME}] temperature is high",
+                                                "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.drive.temp[\"{#LHM.DRIVE.ID}\"],5m)>{$DRIVE.TEMP.HIGH}"
+                                            }
+                                        ],
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "LHM"
+                                            },
+                                            {
+                                                "tag": "Hardware",
+                                                "value": "HDD"
+                                            },
+                                            {
+                                                "tag": "HDD",
+                                                "value": "{#LHM.HDD.NAME}"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "f8867b673e6c45d3a8d304d1e1c87431",
+                                        "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.drive.temp[\"{#LHM.DRIVE.ID}\"],5m)>{$DRIVE.TEMP.HIGH}",
+                                        "name": "Hardware: Drive [{#LHM.DRIVE.NAME}] temperature is high",
+                                        "priority": "HIGH",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "LHM"
+                                            },
+                                            {
+                                                "tag": "Hardware",
+                                                "value": "HDD"
+                                            },
+                                            {
+                                                "tag": "HDD",
+                                                "value": "{#LHM.HDD.NAME}"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "f9cf4488affd426eb4305346b465ba21",
+                                        "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.drive.temp[\"{#LHM.DRIVE.ID}\"],5m)>{$DRIVE.TEMP.WARNING}",
+                                        "name": "Hardware: Drive [{#LHM.DRIVE.NAME}] temperature is warning",
+                                        "priority": "WARNING",
+                                        "dependencies": [
+                                            {
+                                                "name": "Hardware: Drive [{#LHM.DRIVE.NAME}] temperature is average",
+                                                "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.drive.temp[\"{#LHM.DRIVE.ID}\"],5m)>{$DRIVE.TEMP.AVERAGE}"
+                                            }
+                                        ],
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "LHM"
+                                            },
+                                            {
+                                                "tag": "Hardware",
+                                                "value": "HDD"
+                                            },
+                                            {
+                                                "tag": "HDD",
+                                                "value": "{#LHM.HDD.NAME}"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "lhm.raw.data"
+                        },
+                        "lld_macro_paths": [
+                            {
+                                "lld_macro": "{#LHM.DRIVE.ID}",
+                                "path": "$.HardwareId"
+                            },
+                            {
+                                "lld_macro": "{#LHM.DRIVE.NAME}",
+                                "path": "$.Text"
+                            }
+                        ],
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.Children[0].Children[?(@.HardwareId =~ \"^/(hdd|ssd)/[0-9]+$\")]"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "cd17202d2db942b5bef83a7e490c49e1",
+                        "name": "Get Fans",
+                        "type": "DEPENDENT",
+                        "key": "lhm.get.fans",
+                        "filter": {
+                            "conditions": [
+                                {
+                                    "macro": "{#FANS.NAME}",
+                                    "value": "{$LHM.FAN.EXCLUDE.MATCHES}",
+                                    "operator": "NOT_MATCHES_REGEX"
+                                }
+                            ]
+                        },
+                        "item_prototypes": [
+                            {
+                                "uuid": "bd9bbcf555894d308bf345b7645a2050",
+                                "name": "Hardware: FAN [{#FANS.NAME}] Speed in RPM",
+                                "type": "DEPENDENT",
+                                "key": "lhm.fan.speed[\"{#FANS.ID}\"]",
+                                "units": "RPM",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.Children..Children.[?(@.HardwareId =~ \"^/lpc/[^/]+/[0-9]+$\")].Children.[?(@.Text == \"Fans\")].Children.[?(@.SensorId== \"{#FANS.ID}\" )].Value.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "RTRIM",
+                                        "parameters": [
+                                            " RPM"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "lhm.raw.data"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "LHM"
+                                    },
+                                    {
+                                        "tag": "Fans",
+                                        "value": "{#FANS.NAME}"
+                                    },
+                                    {
+                                        "tag": "Hardware",
+                                        "value": "FANS"
+                                    }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "lhm.raw.data"
+                        },
+                        "lld_macro_paths": [
+                            {
+                                "lld_macro": "{#FANS.ID}",
+                                "path": "$.SensorId"
+                            },
+                            {
+                                "lld_macro": "{#FANS.NAME}",
+                                "path": "$.Text"
+                            }
+                        ],
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.Children..Children.[?(@.HardwareId =~ \"^/lpc/[^/]+/[0-9]+$\")].Children[?(@.Text == \"Fans\")].Children[*]"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "755d5a657d504c8ea4d895334eaa71a1",
+                        "name": "Get GPU",
+                        "type": "DEPENDENT",
+                        "key": "lhm.get.gpu",
+                        "item_prototypes": [
+                            {
+                                "uuid": "a537bcce3db548c280f9943f3d474e1d",
+                                "name": "Hardware: GPU Temperature [{#GPU.TEMP.NAME}] in \u00b0C",
+                                "type": "DEPENDENT",
+                                "key": "lhm.gpu.temp[\"{#GPU.TEMP.ID}\"]",
+                                "trends": "0",
+                                "units": "\u00b0C",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.Children[0].Children[?(@.HardwareId =~ \"^/gpu-.+\")].Children.[?(@.Text == \"Temperatures\")].Children.[?(@.SensorId == \"{#GPU.TEMP.ID}\")].Value.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            ",",
+                                            "."
+                                        ]
+                                    },
+                                    {
+                                        "type": "TRIM",
+                                        "parameters": [
+                                            " \u00b0C"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "lhm.raw.data"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "LHM"
+                                    },
+                                    {
+                                        "tag": "GPU",
+                                        "value": "{#GPU.TEMP.NAME}"
+                                    },
+                                    {
+                                        "tag": "Hardware",
+                                        "value": "GPU"
+                                    }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "5b4693faf4fa4f02869c59f372a8d7a6",
+                                        "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.gpu.temp[\"{#GPU.TEMP.ID}\"],5m)>{$GPU.TEMP.AVERAGE}",
+                                        "name": "Hardware: GPU [{#GPU.TEMP.NAME}] temperature is average",
+                                        "priority": "AVERAGE",
+                                        "dependencies": [
+                                            {
+                                                "name": "Hardware: GPU [{#GPU.TEMP.NAME}] temperature is high",
+                                                "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.gpu.temp[\"{#GPU.TEMP.ID}\"],5m)>{$GPU.TEMP.HIGH}"
+                                            }
+                                        ],
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "LHM"
+                                            },
+                                            {
+                                                "tag": "Hardware",
+                                                "value": "GPU"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "cbf7b483eea04223b8ac60c537906e1d",
+                                        "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.gpu.temp[\"{#GPU.TEMP.ID}\"],5m)>{$GPU.TEMP.HIGH}",
+                                        "name": "Hardware: GPU [{#GPU.TEMP.NAME}] temperature is high",
+                                        "priority": "HIGH",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "LHM"
+                                            },
+                                            {
+                                                "tag": "Hardware",
+                                                "value": "GPU"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "1c68e3d182fc4406a92e2c0c3ce907c1",
+                                        "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.gpu.temp[\"{#GPU.TEMP.ID}\"],5m)>{$GPU.TEMP.WARNING}",
+                                        "name": "Hardware: GPU [{#GPU.TEMP.NAME}] temperature is warning",
+                                        "priority": "AVERAGE",
+                                        "dependencies": [
+                                            {
+                                                "name": "Hardware: GPU [{#GPU.TEMP.NAME}] temperature is average",
+                                                "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.gpu.temp[\"{#GPU.TEMP.ID}\"],5m)>{$GPU.TEMP.AVERAGE}"
+                                            }
+                                        ],
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "LHM"
+                                            },
+                                            {
+                                                "tag": "Hardware",
+                                                "value": "GPU"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "lhm.raw.data"
+                        },
+                        "lld_macro_paths": [
+                            {
+                                "lld_macro": "{#GPU.TEMP.ID}",
+                                "path": "$.SensorId"
+                            },
+                            {
+                                "lld_macro": "{#GPU.TEMP.NAME}",
+                                "path": "$.Text"
+                            }
+                        ],
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.Children[0].Children[?(@.HardwareId =~  \"^/gpu-.+\")].Children[?(@.Text == \"Temperatures\")].Children[*]"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "2f70476e95a94c74858eb3aefa7cf2c5",
+                        "name": "Get Nvme",
+                        "type": "DEPENDENT",
+                        "key": "lhm.get.nvme",
+                        "item_prototypes": [
+                            {
+                                "uuid": "97353207b52a46c8a2ebafadf8c08e8a",
+                                "name": "Hardware: NVME [{#LHM.NVME.NAME}] Temperature [{#LHM.NVME.TEMP.NAME}] in \u00b0C",
+                                "type": "DEPENDENT",
+                                "key": "lhm.nvme.temp[\"{#LHM.NVME.ID}.{#LHM.NVME.TEMP.ID}\"]",
+                                "trends": "0",
+                                "units": "\u00b0C",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.Children[0].Children[?(@.HardwareId == \"{#LHM.NVME.ID}\")].Children.[?(@.Text == \"Temperatures\")].Children.[?(@.SensorId == \"{#LHM.NVME.TEMP.ID}\")].Value.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            ",",
+                                            "."
+                                        ]
+                                    },
+                                    {
+                                        "type": "TRIM",
+                                        "parameters": [
+                                            " \u00b0C"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "lhm.raw.data"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "Application",
+                                        "value": "LHM"
+                                    },
+                                    {
+                                        "tag": "Hardware",
+                                        "value": "NVME"
+                                    },
+                                    {
+                                        "tag": "NVME",
+                                        "value": "{#LHM.NVME.NAME}"
+                                    }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "b37bd4e8ed0b44f389e3a4ecba1b785a",
+                                        "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.nvme.temp[\"{#LHM.NVME.ID}.{#LHM.NVME.TEMP.ID}\"],5m)>{$NVME.TEMP.AVERAGE}",
+                                        "name": "Hardware: NVME [{#LHM.NVME.NAME}] Temperature is average",
+                                        "discover": "NO_DISCOVER",
+                                        "priority": "AVERAGE",
+                                        "dependencies": [
+                                            {
+                                                "name": "Hardware: NVME [{#LHM.NVME.NAME}] Temperature is high",
+                                                "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.nvme.temp[\"{#LHM.NVME.ID}.{#LHM.NVME.TEMP.ID}\"],5m)>{$NVME.TEMP.HIGH}"
+                                            }
+                                        ],
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "LHM"
+                                            },
+                                            {
+                                                "tag": "Hardware",
+                                                "value": "NVME"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "b9f26a2a5970455a8464c14156b79ee0",
+                                        "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.nvme.temp[\"{#LHM.NVME.ID}.{#LHM.NVME.TEMP.ID}\"],5m)>{$NVME.TEMP.HIGH}",
+                                        "name": "Hardware: NVME [{#LHM.NVME.NAME}] Temperature is high",
+                                        "discover": "NO_DISCOVER",
+                                        "priority": "HIGH",
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "LHM"
+                                            },
+                                            {
+                                                "tag": "Hardware",
+                                                "value": "NVME"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "abeba4bb4f8641dd96f32179ddc99c5c",
+                                        "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.nvme.temp[\"{#LHM.NVME.ID}.{#LHM.NVME.TEMP.ID}\"],5m)>{$NVME.TEMP.WARNING}",
+                                        "name": "Hardware: NVME [{#LHM.NVME.NAME}] Temperature is warning",
+                                        "discover": "NO_DISCOVER",
+                                        "priority": "WARNING",
+                                        "dependencies": [
+                                            {
+                                                "name": "Hardware: NVME [{#LHM.NVME.NAME}] Temperature is average",
+                                                "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.nvme.temp[\"{#LHM.NVME.ID}.{#LHM.NVME.TEMP.ID}\"],5m)>{$NVME.TEMP.AVERAGE}"
+                                            }
+                                        ],
+                                        "tags": [
+                                            {
+                                                "tag": "Application",
+                                                "value": "LHM"
+                                            },
+                                            {
+                                                "tag": "Hardware",
+                                                "value": "NVME"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "lhm.raw.data"
+                        },
+                        "preprocessing": [
+                            {
+                                "type": "JAVASCRIPT",
+                                "parameters": [
+                                    "var root = JSON.parse(value);\nvar result = [];\n\nfunction walk(node) {\n    if (!node || typeof node !== \"object\") {\n        return;\n    }\n\n    if (node.HardwareId && /^\\/nvme\\/[0-9]+$/.test(node.HardwareId)) {\n        var nvmeId = node.HardwareId;\n        var nvmeName = node.Text || nvmeId;\n\n        var groups = node.Children || [];\n\n        for (var i = 0; i < groups.length; i++) {\n            var group = groups[i];\n\n            if (group.Text !== \"Temperatures\") {\n                continue;\n            }\n\n            var sensors = group.Children || [];\n\n            for (var j = 0; j < sensors.length; j++) {\n                var sensor = sensors[j];\n\n                if (sensor.Type !== \"Temperature\") {\n                    continue;\n                }\n\n                result.push({\n                    \"{#LHM.NVME.ID}\": nvmeId,\n                    \"{#LHM.NVME.NAME}\": nvmeName,\n                    \"{#LHM.NVME.TEMP.ID}\": sensor.SensorId,\n                    \"{#LHM.NVME.TEMP.NAME}\": sensor.Text\n                });\n            }\n        }\n    }\n\n    var children = node.Children || [];\n    for (var k = 0; k < children.length; k++) {\n        walk(children[k]);\n    }\n}\n\nwalk(root);\n\nreturn JSON.stringify(result);"
+                                ]
+                            }
+                        ],
+                        "overrides": [
+                            {
+                                "name": "Create NVME discovered items",
+                                "step": "1",
+                                "filter": {
+                                    "conditions": [
+                                        {
+                                            "macro": "{#LHM.NVME.TEMP.NAME}",
+                                            "value": "^\\s*(Warning Temperature|Critical Temperature)\\s*$"
+                                        }
+                                    ]
+                                },
+                                "operations": [
+                                    {
+                                        "operator": "LIKE",
+                                        "value": "NVME",
+                                        "history": "1d",
+                                        "trends": "0"
+                                    }
+                                ]
+                            },
+                            {
+                                "name": "Create NVME main temperature trigger",
+                                "step": "2",
+                                "filter": {
+                                    "conditions": [
+                                        {
+                                            "macro": "{#LHM.NVME.TEMP.NAME}",
+                                            "value": "^\\s*(Composite Temperature)\\s*$"
+                                        }
+                                    ]
+                                },
+                                "operations": [
+                                    {
+                                        "operationobject": "TRIGGER_PROTOTYPE",
+                                        "operator": "LIKE",
+                                        "value": "Temperature is",
+                                        "discover": "DISCOVER"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "macros": [
+                    {
+                        "macro": "{$CPU.TEMP.AVERAGE}",
+                        "value": "85"
+                    },
+                    {
+                        "macro": "{$CPU.TEMP.HIGH}",
+                        "value": "95"
+                    },
+                    {
+                        "macro": "{$CPU.TEMP.WARNING}",
+                        "value": "75"
+                    },
+                    {
+                        "macro": "{$DRIVE.TEMP.AVERAGE}",
+                        "value": "50"
+                    },
+                    {
+                        "macro": "{$DRIVE.TEMP.HIGH}",
+                        "value": "55"
+                    },
+                    {
+                        "macro": "{$DRIVE.TEMP.WARNING}",
+                        "value": "45"
+                    },
+                    {
+                        "macro": "{$GPU.TEMP.AVERAGE}",
+                        "value": "85"
+                    },
+                    {
+                        "macro": "{$GPU.TEMP.HIGH}",
+                        "value": "95"
+                    },
+                    {
+                        "macro": "{$GPU.TEMP.WARNING}",
+                        "value": "75"
+                    },
+                    {
+                        "macro": "{$LHM.FAN.EXCLUDE.MATCHES}",
+                        "value": "^\\s*Fan #([3-9]|10)\\s*$"
+                    },
+                    {
+                        "macro": "{$NVME.TEMP.AVERAGE}",
+                        "value": "75"
+                    },
+                    {
+                        "macro": "{$NVME.TEMP.HIGH}",
+                        "value": "80"
+                    },
+                    {
+                        "macro": "{$NVME.TEMP.WARNING}",
+                        "value": "65"
+                    }
+                ]
+            }
+        ]
+    }
+}
