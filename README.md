@@ -8,13 +8,14 @@
 
 # Шаблоны Zabbix для мониторинга инфраструктуры
 
-Этот репозиторий содержит набор пользовательских шаблонов Zabbix для мониторинга инфраструктурных сервисов и систем.
+Этот репозиторий содержит набор пользовательских шаблонов Zabbix для мониторинга инфраструктурных сервисов, оборудования и приложений.
 
 В текущий набор входят шаблоны для:
 
 * Lenovo Storage DE Series / DE2000H;
 * Reg.ru доменов и услуг хостинга;
-* VMware Replication / VMware vSphere Replication.
+* VMware Replication / VMware vSphere Replication;
+* LibreHardwareMonitor.
 
 Шаблоны используют HTTP API, REST API, JavaScript preprocessing, dependent items, low-level discovery rules и триггеры для автоматического обнаружения объектов и контроля их состояния.
 
@@ -25,6 +26,7 @@
 | `Lenovo Storage DE Series by HTTP` | Мониторинг СХД Lenovo Storage DE Series, в первую очередь Lenovo DE2000H, через HTTP API контроллера |
 | `Reg.ru by HTTP`                   | Мониторинг доменов и услуг хостинга Reg.ru через HTTP API                                            |
 | `VMware Replication`               | Мониторинг VMware Replication / VMware vSphere Replication через REST API                            |
+| `LibreHardwareMonitor by HTTP`     | Мониторинг аппаратных датчиков Windows-хоста через HTTP API LibreHardwareMonitor                     |
 
 ## Lenovo Storage DE Series / DE2000H
 
@@ -172,7 +174,102 @@ servtype=srv_hosting_ispmgr
 /api/rest/vr/v2/replication-servers/
 ```
 
-## Установка
+## LibreHardwareMonitor by HTTP
+
+Шаблон предназначен для мониторинга аппаратных датчиков Windows-хоста через встроенный веб-сервер LibreHardwareMonitor.
+
+Он получает JSON-данные из `data.json`, автоматически обнаруживает доступные датчики и создает элементы данных для температур CPU, GPU, NVMe, HDD/SSD и скорости вентиляторов.
+
+Мониторинг включает:
+
+* температуру CPU;
+* температуру GPU;
+* температуру NVMe-накопителей;
+* температуру HDD/SSD;
+* скорость вентиляторов;
+* автоматическое обнаружение поддерживаемых датчиков;
+* фильтрацию вентиляторов по регулярному выражению;
+* температурные триггеры для CPU;
+* температурные триггеры для GPU;
+* температурные триггеры для NVMe;
+* температурные триггеры для HDD/SSD.
+
+### Требования
+
+* Zabbix 7.4 или выше
+* Windows-хост с установленным LibreHardwareMonitor
+* Включенный встроенный веб-сервер LibreHardwareMonitor
+* Доступ Zabbix Server или Zabbix Proxy к HTTP-порту LibreHardwareMonitor
+* Включенная HTTP-аутентификация в LibreHardwareMonitor
+
+### Макросы
+
+| Macro                        | Description                                                               |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| `{$LHM.URL}`                 | URL веб-сервера LibreHardwareMonitor, например `http://192.168.1.10:8085` |
+| `{$LHM.USER}`                | Имя пользователя для Basic authentication                                 |
+| `{$LHM.PASSWORD}`            | Хеш пароля из конфигурационного файла LibreHardwareMonitor                |
+| `{$LHM.FAN.EXCLUDE.MATCHES}` | Регулярное выражение для исключения вентиляторов из обнаружения           |
+| `{$CPU.TEMP.WARNING}`        | Warning-порог температуры CPU                                             |
+| `{$CPU.TEMP.AVERAGE}`        | Average-порог температуры CPU                                             |
+| `{$CPU.TEMP.HIGH}`           | High-порог температуры CPU                                                |
+| `{$GPU.TEMP.WARNING}`        | Warning-порог температуры GPU                                             |
+| `{$GPU.TEMP.AVERAGE}`        | Average-порог температуры GPU                                             |
+| `{$GPU.TEMP.HIGH}`           | High-порог температуры GPU                                                |
+| `{$NVME.TEMP.WARNING}`       | Warning-порог температуры NVMe                                            |
+| `{$NVME.TEMP.AVERAGE}`       | Average-порог температуры NVMe                                            |
+| `{$NVME.TEMP.HIGH}`          | High-порог температуры NVMe                                               |
+| `{$DRIVE.TEMP.WARNING}`      | Warning-порог температуры HDD/SSD                                         |
+| `{$DRIVE.TEMP.AVERAGE}`      | Average-порог температуры HDD/SSD                                         |
+| `{$DRIVE.TEMP.HIGH}`         | High-порог температуры HDD/SSD                                            |
+
+### Настройка LibreHardwareMonitor
+
+1. Скачайте и распакуйте LibreHardwareMonitor, например в каталог:
+
+```text
+C:\LibreHardwareMonitor
+```
+
+2. Запустите `LibreHardwareMonitor.exe`.
+3. Включите встроенный веб-сервер.
+4. Включите аутентификацию.
+5. Задайте логин и пароль.
+6. Проверьте доступность endpoint:
+
+```text
+http://host:port/data.json
+```
+
+7. Добавьте запуск LibreHardwareMonitor в Планировщик заданий Windows.
+
+### Особенности
+
+Для CPU основные температурные триггеры создаются только для следующих датчиков:
+
+| Sensor             | CPU       |
+| ------------------ | --------- |
+| `CPU Package`      | Intel CPU |
+| `Core (Tctl/Tdie)` | AMD CPU   |
+
+Для NVMe основные температурные триггеры создаются для датчика:
+
+```text
+Composite Temperature
+```
+
+Датчики:
+
+```text
+Warning Temperature
+Critical Temperature
+```
+
+создаются только как элементы данных для сбора температурных лимитов NVMe. Они нужны для того, чтобы для каждого NVMe-накопителя можно было определить корректные температурные значения и при необходимости задать подходящие макросы порогов.
+
+Для этих элементов данных хранение истории ограничено 1 днем, так как значения `Warning Temperature` и `Critical Temperature` обычно не меняются. Это позволяет не увеличивать размер базы данных Zabbix за счет постоянного хранения одинаковых значений.
+
+## Установка шаблонов
 
 1. Скачайте нужный файл шаблона из репозитория.
 2. В Zabbix откройте:
@@ -188,21 +285,14 @@ Data collection → Templates → Import
 7. Убедитесь, что Zabbix Server или Zabbix Proxy имеет сетевой доступ к API целевой системы.
 8. Дождитесь выполнения low-level discovery rules.
 
-## Безопасность
-
-Не храните реальные логины, пароли, API keys или API passwords в репозитории.
-
-Рекомендуется использовать отдельные учетные записи только для мониторинга и выдавать им минимально необходимые права на чтение.
-
-Для production-среды рекомендуется предварительно протестировать шаблоны на отдельном хосте или тестовом окружении.
-
 ## Совместимость
 
 | Template                         | Tested / Target Zabbix Version |
 | -------------------------------- | ------------------------------ |
-| Lenovo Storage DE Series by HTTP | Zabbix 7.0 и выше              |
+| Lenovo Storage DE Series by HTTP | Zabbix 6.4, 7.0 и выше         |
 | Reg.ru by HTTP                   | Zabbix 7.0 и выше              |
 | VMware Replication               | Zabbix 7.0 и выше              |
+| LibreHardwareMonitor by HTTP     | Zabbix 7.0 и выше              |
 
 Работа на других версиях Zabbix возможна, но требует отдельной проверки.
 
@@ -218,13 +308,14 @@ Pull requests, issues и предложения приветствуются.
 
 # Zabbix Templates for Infrastructure Monitoring
 
-This repository contains a collection of custom Zabbix templates for monitoring infrastructure systems and services.
+This repository contains a collection of custom Zabbix templates for monitoring infrastructure systems, services, hardware and applications.
 
 The current set includes templates for:
 
 * Lenovo Storage DE Series / DE2000H;
 * Reg.ru domains and hosting services;
-* VMware Replication / VMware vSphere Replication.
+* VMware Replication / VMware vSphere Replication;
+* LibreHardwareMonitor.
 
 The templates use HTTP API, REST API, JavaScript preprocessing, dependent items, low-level discovery rules and triggers to automatically discover monitored objects and check their state.
 
@@ -235,6 +326,7 @@ The templates use HTTP API, REST API, JavaScript preprocessing, dependent items,
 | `Lenovo Storage DE Series by HTTP` | Monitoring Lenovo Storage DE Series, primarily Lenovo DE2000H, via controller HTTP API |
 | `Reg.ru by HTTP`                   | Monitoring Reg.ru domains and hosting services via HTTP API                            |
 | `VMware Replication`               | Monitoring VMware Replication / VMware vSphere Replication via REST API                |
+| `LibreHardwareMonitor by HTTP`     | Monitoring Windows hardware sensors via LibreHardwareMonitor HTTP API                  |
 
 ## Lenovo Storage DE Series / DE2000H
 
@@ -382,7 +474,102 @@ Monitoring includes:
 /api/rest/vr/v2/replication-servers/
 ```
 
-## Installation
+## LibreHardwareMonitor by HTTP
+
+This template is designed for monitoring Windows hardware sensors via the built-in LibreHardwareMonitor web server.
+
+It collects JSON data from `data.json`, automatically discovers available sensors and creates items for CPU, GPU, NVMe, HDD/SSD temperatures and fan speeds.
+
+Monitoring includes:
+
+* CPU temperature;
+* GPU temperature;
+* NVMe temperature;
+* HDD/SSD temperature;
+* fan speed;
+* automatic sensor discovery;
+* fan filtering using a regular expression;
+* CPU temperature threshold triggers;
+* GPU temperature threshold triggers;
+* NVMe temperature threshold triggers;
+* HDD/SSD temperature threshold triggers.
+
+### Requirements
+
+* Zabbix 7.4 or later
+* Windows host with LibreHardwareMonitor installed
+* Enabled LibreHardwareMonitor built-in web server
+* Network access from Zabbix Server or Zabbix Proxy to the LibreHardwareMonitor HTTP port
+* Enabled HTTP authentication in LibreHardwareMonitor
+
+### Macros
+
+| Macro                        | Description                                                                 |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| `{$LHM.URL}`                 | LibreHardwareMonitor web server URL, for example `http://192.168.1.10:8085` |
+| `{$LHM.USER}`                | Username for Basic authentication                                           |
+| `{$LHM.PASSWORD}`            | Password hash from the LibreHardwareMonitor configuration file              |
+| `{$LHM.FAN.EXCLUDE.MATCHES}` | Regular expression for excluding fans from discovery                        |
+| `{$CPU.TEMP.WARNING}`        | CPU warning temperature threshold                                           |
+| `{$CPU.TEMP.AVERAGE}`        | CPU average temperature threshold                                           |
+| `{$CPU.TEMP.HIGH}`           | CPU high temperature threshold                                              |
+| `{$GPU.TEMP.WARNING}`        | GPU warning temperature threshold                                           |
+| `{$GPU.TEMP.AVERAGE}`        | GPU average temperature threshold                                           |
+| `{$GPU.TEMP.HIGH}`           | GPU high temperature threshold                                              |
+| `{$NVME.TEMP.WARNING}`       | NVMe warning temperature threshold                                          |
+| `{$NVME.TEMP.AVERAGE}`       | NVMe average temperature threshold                                          |
+| `{$NVME.TEMP.HIGH}`          | NVMe high temperature threshold                                             |
+| `{$DRIVE.TEMP.WARNING}`      | HDD/SSD warning temperature threshold                                       |
+| `{$DRIVE.TEMP.AVERAGE}`      | HDD/SSD average temperature threshold                                       |
+| `{$DRIVE.TEMP.HIGH}`         | HDD/SSD high temperature threshold                                          |
+
+### LibreHardwareMonitor Setup
+
+1. Download and extract LibreHardwareMonitor, for example to:
+
+```text
+C:\LibreHardwareMonitor
+```
+
+2. Start `LibreHardwareMonitor.exe`.
+3. Enable the built-in web server.
+4. Enable authentication.
+5. Set username and password.
+6. Check the endpoint availability:
+
+```text
+http://host:port/data.json
+```
+
+7. Add LibreHardwareMonitor startup to Windows Task Scheduler.
+
+### Notes
+
+For CPU, main temperature triggers are created only for the following sensors:
+
+| Sensor             | CPU       |
+| ------------------ | --------- |
+| `CPU Package`      | Intel CPU |
+| `Core (Tctl/Tdie)` | AMD CPU   |
+
+For NVMe, main temperature triggers are created for:
+
+```text
+Composite Temperature
+```
+
+The following sensors:
+
+```text
+Warning Temperature
+Critical Temperature
+```
+
+are created only as data collection items for NVMe temperature limits. They are useful for checking the correct temperature limits for each NVMe drive and adjusting threshold macros if needed.
+
+History storage for these items is limited to 1 day because `Warning Temperature` and `Critical Temperature` values usually do not change. This helps avoid unnecessary Zabbix database growth caused by storing the same values repeatedly.
+
+## Template Installation
 
 1. Download the required template file from this repository.
 2. In Zabbix, open:
@@ -398,21 +585,14 @@ Data collection → Templates → Import
 7. Make sure Zabbix Server or Zabbix Proxy has network access to the target system API.
 8. Wait for the low-level discovery rules to run.
 
-## Security Notes
-
-Do not store real usernames, passwords, API keys or API passwords in the repository.
-
-It is recommended to use dedicated monitoring accounts and grant them only the minimum required read permissions.
-
-For production environments, test the templates on a separate host or test environment before using them widely.
-
 ## Compatibility
 
 | Template                         | Tested / Target Zabbix Version |
 | -------------------------------- | ------------------------------ |
-| Lenovo Storage DE Series by HTTP | Zabbix 7.0 or later            |
+| Lenovo Storage DE Series by HTTP | Zabbix 6.4, 7.0 or later       |
 | Reg.ru by HTTP                   | Zabbix 7.0 or later            |
 | VMware Replication               | Zabbix 7.0 or later            |
+| LibreHardwareMonitor by HTTP     | Zabbix 7.0 or later            |
 
 Compatibility with other Zabbix versions is possible but should be tested separately.
 
