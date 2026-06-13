@@ -264,15 +264,9 @@ Fan #4
 Fan #10
 ```
 
-## Безопасность
-
-Не публикуйте реальные логины, пароли и хеши паролей в репозитории.
-
-Если веб-сервер LibreHardwareMonitor доступен по сети, ограничьте доступ к нему с помощью firewall и разрешите подключения только с Zabbix Server или Zabbix Proxy.
-
 ## Совместимость
 
-Шаблон подготовлен для Zabbix 7.4.
+Шаблон подготовлен для Zabbix 7.0.
 
 Работа на других версиях Zabbix возможна, но требует отдельной проверки.
 
@@ -544,12 +538,6 @@ Fan #4
 ...
 Fan #10
 ```
-
-## Security Notes
-
-Do not publish real usernames, passwords or password hashes in the repository.
-
-If the LibreHardwareMonitor web server is reachable over the network, restrict access with a firewall and allow connections only from Zabbix Server or Zabbix Proxy.
 
 ## Compatibility
 
