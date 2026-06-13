@@ -35,10 +35,10 @@
 ## Требования
 
 * Zabbix 7.0 или выше
-* Windows-хост с установленным LibreHardwareMonitor
-* Включенный встроенный веб-сервер LibreHardwareMonitor
-* Доступ Zabbix Server или Zabbix Proxy к HTTP-порту LibreHardwareMonitor
-* Включенная HTTP-аутентификация в LibreHardwareMonitor
+* Windows-хост с установленным LibreHardwareMonitor v0.9.6+
+* Включенный встроенный веб-сервер LibreHardwareMonitor v0.9.6+
+* Доступ Zabbix Server или Zabbix Proxy к HTTP-порту LibreHardwareMonitor v0.9.6+
+* Включенная HTTP-аутентификация в LibreHardwareMonitor v0.9.6+
 
 ## Макросы
 
@@ -90,7 +90,7 @@
 
 ## Настройка LibreHardwareMonitor
 
-1. Скачайте LibreHardwareMonitor.
+1. Скачайте LibreHardwareMonitor v0.9.6+.
 2. Распакуйте архив, например в каталог:
 
 ```text
@@ -324,7 +324,7 @@ Monitoring includes:
 ## Requirements
 
 * Zabbix 7.4 or later
-* Windows host with LibreHardwareMonitor installed
+* Windows host with LibreHardwareMonitor v0.9.6+ installed
 * Enabled LibreHardwareMonitor built-in web server
 * Network access from Zabbix Server or Zabbix Proxy to the LibreHardwareMonitor HTTP port
 * Enabled HTTP authentication in LibreHardwareMonitor
@@ -379,7 +379,7 @@ Default threshold values:
 
 ## LibreHardwareMonitor Setup
 
-1. Download LibreHardwareMonitor.
+1. Download LibreHardwareMonitor v0.9.6+.
 2. Extract it, for example to:
 
 ```text
