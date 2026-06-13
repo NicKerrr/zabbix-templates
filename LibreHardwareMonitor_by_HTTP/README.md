@@ -234,10 +234,10 @@ lhm.raw.data
 
 Для CPU основные температурные триггеры создаются только для следующих датчиков:
 
-| Sensor | CPU |
-|---|---|
-| `CPU Package` | Intel CPU |
-| `Core (Tctl/Tdie)` | AMD CPU |
+| Sensor             | CPU       |
+| ------------------ | --------- |
+| `CPU Package`      | Intel CPU |
+| `Core (Tctl/Tdie)` | AMD CPU   |
 
 То есть для Intel-процессоров триггеры создаются по датчику `CPU Package`, а для AMD-процессоров — по датчику `Core (Tctl/Tdie)`.
 
@@ -247,7 +247,16 @@ lhm.raw.data
 Composite Temperature
 ```
 
-Датчики `Warning Temperature` и `Critical Temperature` могут создаваться как элементы данных без включения температурных триггеров.
+Датчики:
+
+```text
+Warning Temperature
+Critical Temperature
+```
+
+создаются только как элементы данных для сбора температурных лимитов NVMe. Они нужны для того, чтобы для каждого NVMe-накопителя можно было определить корректные температурные значения и при необходимости задать подходящие макросы порогов.
+
+Для этих элементов данных хранение истории ограничено 1 днем, так как значения `Warning Temperature` и `Critical Temperature` обычно не меняются. Это позволяет не увеличивать размер базы данных Zabbix за счет постоянного хранения одинаковых значений.
 
 Для вентиляторов используется макрос исключения:
 
@@ -508,12 +517,12 @@ Some triggers include dependencies to avoid duplicate alerts when a higher sever
 
 For CPU, main temperature triggers are created only for the following sensors:
 
-| Sensor | CPU |
-|---|---|
-| `CPU Package` | Intel CPU |
-| `Core (Tctl/Tdie)` | AMD CPU |
+| Sensor             | CPU       |
+| ------------------ | --------- |
+| `CPU Package`      | Intel CPU |
+| `Core (Tctl/Tdie)` | AMD CPU   |
 
-For Intel CPUs, triggers are created for the `CPU Package` sensor.  
+For Intel CPUs, triggers are created for the `CPU Package` sensor.
 For AMD CPUs, triggers are created for the `Core (Tctl/Tdie)` sensor.
 
 For NVMe, main temperature triggers are created for:
@@ -522,7 +531,17 @@ For NVMe, main temperature triggers are created for:
 Composite Temperature
 ```
 
-`Warning Temperature` and `Critical Temperature` sensors may be created as regular items without temperature triggers.
+The following sensors:
+
+```text
+Warning Temperature
+Critical Temperature
+```
+
+are created only as data collection items for NVMe temperature limits. They are useful for checking the correct temperature limits for each NVMe drive and adjusting threshold macros if needed.
+
+History storage for these items is limited to 1 day because `Warning Temperature` and `Critical Temperature` values usually do not change. This helps avoid unnecessary Zabbix database growth caused by storing the same values repeatedly.
+
 
 Fan discovery uses the exclusion macro:
 
@@ -541,7 +560,7 @@ Fan #10
 
 ## Compatibility
 
-The template was prepared for Zabbix 7.4.
+The template was prepared for Zabbix 7.0.
 
 Compatibility with other Zabbix versions is possible but should be tested separately.
 
