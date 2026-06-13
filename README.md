@@ -235,11 +235,20 @@ C:\LibreHardwareMonitor
 3. Включите встроенный веб-сервер.
 4. Включите аутентификацию.
 5. Задайте логин и пароль.
-6. Проверьте доступность endpoint:
+6. Проверьте доступность endpoint с Zabbix Server или Zabbix Proxy с помощью `curl`:
 
-```text
-http://host:port/data.json
+```bash
+curl -u "user:password_hash" http://ip:port/data.json
 ```
+
+Где:
+
+* `user` — имя пользователя, заданное в LibreHardwareMonitor;
+* `password_hash` — хеш пароля из конфигурационного файла LibreHardwareMonitor;
+* `ip` — IP-адрес Windows-хоста с LibreHardwareMonitor;
+* `port` — порт встроенного веб-сервера LibreHardwareMonitor.
+
+Если команда возвращает JSON-данные, LibreHardwareMonitor доступен для Zabbix.
 
 7. Добавьте запуск LibreHardwareMonitor в Планировщик заданий Windows.
 
@@ -535,11 +544,20 @@ C:\LibreHardwareMonitor
 3. Enable the built-in web server.
 4. Enable authentication.
 5. Set username and password.
-6. Check the endpoint availability:
+6. Check endpoint availability from Zabbix Server or Zabbix Proxy using `curl`:
 
-```text
-http://host:port/data.json
+```bash
+curl -u "user:password_hash" http://ip:port/data.json
 ```
+
+Where:
+
+* `user` is the username configured in LibreHardwareMonitor;
+* `password_hash` is the password hash from the LibreHardwareMonitor configuration file;
+* `ip` is the IP address of the Windows host running LibreHardwareMonitor;
+* `port` is the LibreHardwareMonitor built-in web server port.
+
+If the command returns JSON data, LibreHardwareMonitor is available for Zabbix.
 
 7. Add LibreHardwareMonitor startup to Windows Task Scheduler.
 

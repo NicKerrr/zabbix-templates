@@ -34,7 +34,7 @@
 
 ## Требования
 
-* Zabbix 7.4 или выше
+* Zabbix 7.0 или выше
 * Windows-хост с установленным LibreHardwareMonitor
 * Включенный встроенный веб-сервер LibreHardwareMonitor
 * Доступ Zabbix Server или Zabbix Proxy к HTTP-порту LibreHardwareMonitor
@@ -101,14 +101,20 @@ C:\LibreHardwareMonitor
 4. Включите встроенный веб-сервер LibreHardwareMonitor.
 5. Включите аутентификацию.
 6. Задайте логин и пароль.
-7. Проверьте, что страница веб-сервера доступна с Zabbix Server или Zabbix Proxy.
-8. Откройте endpoint:
+7. Проверьте доступность endpoint с Zabbix Server или Zabbix Proxy с помощью `curl`:
 
-```text
-http://host:port/data.json
+```bash
+curl -u "user:password_hash" http://ip:port/data.json
 ```
 
-Если JSON открывается, LibreHardwareMonitor готов к подключению Zabbix.
+Где:
+
+* `user` — имя пользователя, заданное в LibreHardwareMonitor;
+* `password_hash` — хеш пароля из конфигурационного файла LibreHardwareMonitor;
+* `ip` — IP-адрес Windows-хоста с LibreHardwareMonitor;
+* `port` — порт встроенного веб-сервера LibreHardwareMonitor.
+
+Если команда возвращает JSON-данные, LibreHardwareMonitor доступен для Zabbix.
 
 ## Настройка автозапуска через Планировщик заданий Windows
 
@@ -384,14 +390,20 @@ C:\LibreHardwareMonitor
 4. Enable the built-in web server.
 5. Enable authentication.
 6. Set username and password.
-7. Make sure the web server page is accessible from Zabbix Server or Zabbix Proxy.
-8. Open the endpoint:
+7. Check endpoint availability from Zabbix Server or Zabbix Proxy using `curl`:
 
-```text
-http://host:port/data.json
+```bash
+curl -u "user:password_hash" http://ip:port/data.json
 ```
 
-If the JSON response is available, LibreHardwareMonitor is ready for Zabbix monitoring.
+Where:
+
+* `user` is the username configured in LibreHardwareMonitor;
+* `password_hash` is the password hash from the LibreHardwareMonitor configuration file;
+* `ip` is the IP address of the Windows host running LibreHardwareMonitor;
+* `port` is the LibreHardwareMonitor built-in web server port.
+
+If the command returns JSON data, LibreHardwareMonitor is available for Zabbix.
 
 ## Windows Task Scheduler Setup
 
