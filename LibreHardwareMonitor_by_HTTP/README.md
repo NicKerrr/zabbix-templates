@@ -68,7 +68,7 @@
 ```text
 {$LHM.URL} = http://192.168.1.10:8085
 {$LHM.USER} = zabbix
-{$LHM.PASSWORD} = password_hash_from_lhm_config
+{$LHM.PASSWORD} = password
 ```
 
 Пороговые значения по умолчанию:
@@ -104,13 +104,13 @@ C:\LibreHardwareMonitor
 7. Проверьте доступность endpoint с Zabbix Server или Zabbix Proxy с помощью `curl`:
 
 ```bash
-curl -u "user:password_hash" http://ip:port/data.json
+curl -u "user:password" http://ip:port/data.json
 ```
 
 Где:
 
 * `user` — имя пользователя, заданное в LibreHardwareMonitor;
-* `password_hash` — хеш пароля из конфигурационного файла LibreHardwareMonitor;
+* `password` — пароль, залданный в LibreHardwareMonitor;
 * `ip` — IP-адрес Windows-хоста с LibreHardwareMonitor;
 * `port` — порт встроенного веб-сервера LibreHardwareMonitor.
 
@@ -195,9 +195,8 @@ LibreHardwareMonitor by HTTP
 {$LHM.PASSWORD}
 ```
 
-5. В макрос `{$LHM.PASSWORD}` укажите не исходный пароль, а хеш пароля из конфигурационного файла LibreHardwareMonitor.
-6. Проверьте, что item `LHM Raw Data` получает данные.
-7. Дождитесь выполнения low-level discovery rules.
+5. Проверьте, что item `LHM Raw Data` получает данные.
+6. Дождитесь выполнения low-level discovery rules.
 
 ## Как это работает
 
@@ -357,7 +356,7 @@ Example:
 ```text
 {$LHM.URL} = http://192.168.1.10:8085
 {$LHM.USER} = zabbix
-{$LHM.PASSWORD} = password_hash_from_lhm_config
+{$LHM.PASSWORD} = password
 ```
 
 Default threshold values:
@@ -393,13 +392,13 @@ C:\LibreHardwareMonitor
 7. Check endpoint availability from Zabbix Server or Zabbix Proxy using `curl`:
 
 ```bash
-curl -u "user:password_hash" http://ip:port/data.json
+curl -u "user:password" http://ip:port/data.json
 ```
 
 Where:
 
 * `user` is the username configured in LibreHardwareMonitor;
-* `password_hash` is the password hash from the LibreHardwareMonitor configuration file;
+* `password` is the password configured in LibreHardwareMonitor;
 * `ip` is the IP address of the Windows host running LibreHardwareMonitor;
 * `port` is the LibreHardwareMonitor built-in web server port.
 
@@ -484,9 +483,8 @@ LibreHardwareMonitor by HTTP
 {$LHM.PASSWORD}
 ```
 
-5. In `{$LHM.PASSWORD}`, specify the password hash from the LibreHardwareMonitor configuration file, not the plain text password.
-6. Make sure the `LHM Raw Data` item receives data.
-7. Wait for the low-level discovery rules to run.
+5. Make sure the `LHM Raw Data` item receives data.
+6. Wait for the low-level discovery rules to run.
 
 ## How It Works
 
