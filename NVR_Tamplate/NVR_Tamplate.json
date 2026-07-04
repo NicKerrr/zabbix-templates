@@ -1,0 +1,776 @@
+{
+    "zabbix_export": {
+        "version": "7.0",
+        "template_groups": [
+            {
+                "uuid": "e960332b3f6c46a1956486d4f3f99fce",
+                "name": "Templates/Server hardware"
+            }
+        ],
+        "templates": [
+            {
+                "uuid": "5e5d4e2e009544c4a9f53e541a3be904",
+                "template": "NVR Template",
+                "name": "NVR Template",
+                "description": "NVR monitoring via external Python script and CGI API. Collects system information, discovers active channels and drives, monitors channel status, drive status, recording time range and storage capacity.\n\n\nAuthor: Yaroslav Sharaev https://github.com/NicKerrr/zabbix-templates",
+                "vendor": {
+                    "name": "Yaroslav Sharaev",
+                    "version": "0.8.0"
+                },
+                "templates": [
+                    {
+                        "name": "ICMP Ping"
+                    }
+                ],
+                "groups": [
+                    {
+                        "name": "Templates/Server hardware"
+                    }
+                ],
+                "items": [
+                    {
+                        "uuid": "c9f27b38f5f143c9ba1f6585518a0403",
+                        "name": "Get Raw Data",
+                        "type": "EXTERNAL",
+                        "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]",
+                        "history": "0",
+                        "value_type": "TEXT",
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "NVR"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "raw"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "8044b8eaf4c242ea9f522a37dbd2ba24",
+                        "name": "NVR: System Software Build Time",
+                        "type": "DEPENDENT",
+                        "key": "nvr.system.buildtime",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.system.data.BuildTime"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "10d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "NVR"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "6ca3750b78f84f999a02079f82dbee48",
+                        "name": "NVR: System Total Digital Channels",
+                        "type": "DEPENDENT",
+                        "key": "nvr.system.channel",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.system.data.DigChannel"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "10d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "NVR"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "98d1d63aea244e6890d2570e072eddbd",
+                        "name": "NVR: System Device RunTime",
+                        "type": "DEPENDENT",
+                        "key": "nvr.system.deviceruntime",
+                        "trends": "0",
+                        "units": "s",
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.system.data.DeviceRunTime"
+                                ]
+                            },
+                            {
+                                "type": "JAVASCRIPT",
+                                "parameters": [
+                                    "return parseInt(value, 16) * 60;"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "NVR"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "b1fe89b463c3464cbba8709c6c4fa117",
+                        "name": "NVR: System Hardware ID",
+                        "type": "DEPENDENT",
+                        "key": "nvr.system.hardware",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.system.data.HardWare"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "10d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "NVR"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "623d12a6a0b34787b221fe046068b969",
+                        "name": "NVR: System Product ID",
+                        "type": "DEPENDENT",
+                        "key": "nvr.system.pid",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.system.data.Pid"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "10d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "NVR"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "e43a8fb781f14f0c9205545060c3fb7b",
+                        "name": "NVR: System Serial Number (Cloud ID)",
+                        "type": "DEPENDENT",
+                        "key": "nvr.system.serialno",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.system.data.SerialNo"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "10d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "NVR"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "e0d52ab360e8470f9d981b8d23a27230",
+                        "name": "NVR: System Software Version",
+                        "type": "DEPENDENT",
+                        "key": "nvr.system.software",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.system.data.SoftWareVersion"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "10d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "NVR"
+                            }
+                        ]
+                    }
+                ],
+                "discovery_rules": [
+                    {
+                        "uuid": "ef71caf4c180438b84d4dfd7684446f2",
+                        "name": "Get Channels",
+                        "type": "DEPENDENT",
+                        "key": "nvr.get.channels",
+                        "item_prototypes": [
+                            {
+                                "uuid": "18be204e4d3c47b4b92edc96605f95df",
+                                "name": "Active Channel [{#NVR.CH.NAME}] Current Resolution",
+                                "type": "DEPENDENT",
+                                "key": "nvr.ch.curres.[{#NVR.CH.INDEX}]",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.channels.[?(@.name == \"{#NVR.CH.NAME}\" )].curres.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "10d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "NVR"
+                                    },
+                                    {
+                                        "tag": "channel",
+                                        "value": "{#NVR.CH.NAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "a90f9ce6138142a287db4e7971e8733e",
+                                "name": "Active Channel [{#NVR.CH.NAME}] Status",
+                                "type": "DEPENDENT",
+                                "key": "nvr.ch.status.[{#NVR.CH.INDEX}]",
+                                "trends": "0",
+                                "valuemap": {
+                                    "name": "Channel Status"
+                                },
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.channels.[?(@.name == \"{#NVR.CH.NAME}\" )].status.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "Connected",
+                                            "10"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "NoConfig",
+                                            "6"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "NoConnect",
+                                            "5"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "NoLogin",
+                                            "4"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "LoginFailed",
+                                            "3"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "Offline",
+                                            "0"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "Unknown",
+                                            "1"
+                                        ]
+                                    },
+                                    {
+                                        "type": "STR_REPLACE",
+                                        "parameters": [
+                                            "None",
+                                            "2"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "NVR"
+                                    },
+                                    {
+                                        "tag": "channel",
+                                        "value": "{#NVR.CH.NAME}"
+                                    }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "f016059ec6d442d99a8a999e57e1dacf",
+                                        "expression": "last(/NVR Template/nvr.ch.status.[{#NVR.CH.INDEX}])=3",
+                                        "name": "NVR: Channel [{#NVR.CH.NAME}] Status is Login Failed",
+                                        "priority": "WARNING",
+                                        "tags": [
+                                            {
+                                                "tag": "application",
+                                                "value": "NVR"
+                                            },
+                                            {
+                                                "tag": "channel",
+                                                "value": "{#NVR.CH.NAME}"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "d54382935659497799d7ccbe7cf398db",
+                                        "expression": "last(/NVR Template/nvr.ch.status.[{#NVR.CH.INDEX}])<> 10 and last(/NVR Template/nvr.ch.status.[{#NVR.CH.INDEX}])<> 0",
+                                        "name": "NVR: Channel [{#NVR.CH.NAME}] Status is not Connected",
+                                        "priority": "WARNING",
+                                        "tags": [
+                                            {
+                                                "tag": "application",
+                                                "value": "NVR"
+                                            },
+                                            {
+                                                "tag": "channel",
+                                                "value": "{#NVR.CH.NAME}"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "uuid": "fd1ba9bdf4cf4e80b0fa522b108ac9c9",
+                                        "expression": "last(/NVR Template/nvr.ch.status.[{#NVR.CH.INDEX}])=0",
+                                        "name": "NVR: Channel [{#NVR.CH.NAME}] Status is Offline",
+                                        "priority": "HIGH",
+                                        "tags": [
+                                            {
+                                                "tag": "application",
+                                                "value": "NVR"
+                                            },
+                                            {
+                                                "tag": "channel",
+                                                "value": "{#NVR.CH.NAME}"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                        },
+                        "lld_macro_paths": [
+                            {
+                                "lld_macro": "{#NVR.CH.INDEX}",
+                                "path": "$.index"
+                            },
+                            {
+                                "lld_macro": "{#NVR.CH.NAME}",
+                                "path": "$.name"
+                            }
+                        ],
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.channels[?(@.active == \"true\")]"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "e30e55e6a0b042bba830198a86ebd0f1",
+                        "name": "Get Drives",
+                        "type": "DEPENDENT",
+                        "key": "nvr.get.drives",
+                        "item_prototypes": [
+                            {
+                                "uuid": "1eab1c1b41064068b6486e8cced31bf7",
+                                "name": "NVR: Drive [{#NVR.DRIVES.NO}] Type",
+                                "type": "DEPENDENT",
+                                "key": "nvr.drives.dirvertype.[{#NVR.DRIVES.NO}]",
+                                "valuemap": {
+                                    "name": "Dirver Type"
+                                },
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.disks.[?(@.PlysicalNo == \"{#NVR.DRIVES.NO}\" )].Partition.[?(@.IsCurrent == \"true\" )].DirverType.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "1d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "NVR"
+                                    },
+                                    {
+                                        "tag": "drive",
+                                        "value": "{#NVR.DRIVES.NO}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "ab828cebcac048d48357ca4fd5a9d47a",
+                                "name": "NVR: Drive [{#NVR.DRIVES.NO}] Record End Time",
+                                "type": "DEPENDENT",
+                                "key": "nvr.drives.endrectime.[{#NVR.DRIVES.NO}]",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.disks.[?(@.PlysicalNo == \"{#NVR.DRIVES.NO}\" )].Partition.[?(@.IsCurrent == \"true\" )].NewEndTime.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "1d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "NVR"
+                                    },
+                                    {
+                                        "tag": "drive",
+                                        "value": "{#NVR.DRIVES.NO}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "7d469f88080f4f32b74db641048d7c75",
+                                "name": "NVR: Drive [{#NVR.DRIVES.NO}] Record Start Time",
+                                "type": "DEPENDENT",
+                                "key": "nvr.drives.startrectime.[{#NVR.DRIVES.NO}]",
+                                "value_type": "TEXT",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.disks.[?(@.PlysicalNo == \"{#NVR.DRIVES.NO}\" )].Partition.[?(@.IsCurrent == \"true\" )].NewStartTime.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "1d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "NVR"
+                                    },
+                                    {
+                                        "tag": "drive",
+                                        "value": "{#NVR.DRIVES.NO}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "f72b7d3414aa45fd95a82b573d968835",
+                                "name": "NVR: Drive [{#NVR.DRIVES.NO}] Status",
+                                "type": "DEPENDENT",
+                                "key": "nvr.drives.status.[{#NVR.DRIVES.NO}]",
+                                "valuemap": {
+                                    "name": "Drive Status"
+                                },
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.disks.[?(@.PlysicalNo == \"{#NVR.DRIVES.NO}\" )].Partition.[?(@.IsCurrent == \"true\" )].Status.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "JAVASCRIPT",
+                                        "parameters": [
+                                            "var v = parseInt(value, 10);\n\nif (v === 0) {\n    return 0;\n}\n\nreturn 1;"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "1d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "NVR"
+                                    },
+                                    {
+                                        "tag": "drive",
+                                        "value": "{#NVR.DRIVES.NO}"
+                                    }
+                                ],
+                                "trigger_prototypes": [
+                                    {
+                                        "uuid": "69b37857e13745f5a9d1645bb2cf3e20",
+                                        "expression": "last(/NVR Template/nvr.drives.status.[{#NVR.DRIVES.NO}])=1",
+                                        "name": "NVR: Drive [{#NVR.DRIVES.NO}] Status is Error",
+                                        "priority": "HIGH"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "9d78bc68b9274478837399e66093095b",
+                                "name": "NVR: Drive [{#NVR.DRIVES.NO}] Total Space",
+                                "type": "DEPENDENT",
+                                "key": "nvr.drives.totalspace.[{#NVR.DRIVES.NO}]",
+                                "units": "B",
+                                "preprocessing": [
+                                    {
+                                        "type": "JSONPATH",
+                                        "parameters": [
+                                            "$.disks.[?(@.PlysicalNo == \"{#NVR.DRIVES.NO}\" )].Partition.[?(@.IsCurrent == \"true\" )].TotalSpace.first()"
+                                        ]
+                                    },
+                                    {
+                                        "type": "JAVASCRIPT",
+                                        "parameters": [
+                                            "return parseInt(value, 16) * 1024 * 1024;"
+                                        ]
+                                    },
+                                    {
+                                        "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                        "parameters": [
+                                            "10d"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "NVR"
+                                    },
+                                    {
+                                        "tag": "drive",
+                                        "value": "{#NVR.DRIVES.NO}"
+                                    }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "nvr.raw.data.py[\"--host\",\"{HOST.CONN}\",\"--user\",\"{$NVR.USER}\",\"--password\",\"{$NVR.PASSWORD}\",\"--port\",\"{$NVR.PORT}\"]"
+                        },
+                        "lld_macro_paths": [
+                            {
+                                "lld_macro": "{#NVR.DRIVES.NO}",
+                                "path": "$.PlysicalNo"
+                            }
+                        ],
+                        "preprocessing": [
+                            {
+                                "type": "JSONPATH",
+                                "parameters": [
+                                    "$.disks"
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "macros": [
+                    {
+                        "macro": "{$NVR.USER}"
+                    },
+                    {
+                        "macro": "{$NVR.PASSWORD}"
+                    },
+                    {
+                        "macro": "{$NVR.PORT}"
+                    }
+                ],
+                "valuemaps": [
+                    {
+                        "uuid": "77f2e9fd6f1841c886c962c9f2705af2",
+                        "name": "Channel Status",
+                        "mappings": [
+                            {
+                                "value": "0",
+                                "newvalue": "Offline"
+                            },
+                            {
+                                "value": "1",
+                                "newvalue": "Unknown"
+                            },
+                            {
+                                "value": "2",
+                                "newvalue": "None"
+                            },
+                            {
+                                "value": "3",
+                                "newvalue": "Login Failed"
+                            },
+                            {
+                                "value": "4",
+                                "newvalue": "No Login"
+                            },
+                            {
+                                "value": "5",
+                                "newvalue": "No Connect"
+                            },
+                            {
+                                "value": "6",
+                                "newvalue": "No Config"
+                            },
+                            {
+                                "value": "10",
+                                "newvalue": "Connected"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "74bc2a79fc3a4d5da16fe44a8ca0097e",
+                        "name": "Dirver Type",
+                        "mappings": [
+                            {
+                                "value": "0",
+                                "newvalue": "Read/Write"
+                            },
+                            {
+                                "value": "1",
+                                "newvalue": "Read Only"
+                            },
+                            {
+                                "value": "2",
+                                "newvalue": "Event"
+                            },
+                            {
+                                "value": "3",
+                                "newvalue": "Redundancy"
+                            },
+                            {
+                                "value": "4",
+                                "newvalue": "Snapshot"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "5efa7f7866c24575bf298aea72954f86",
+                        "name": "Drive Status",
+                        "mappings": [
+                            {
+                                "value": "0",
+                                "newvalue": "Normal"
+                            },
+                            {
+                                "value": "1",
+                                "newvalue": "Error"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
