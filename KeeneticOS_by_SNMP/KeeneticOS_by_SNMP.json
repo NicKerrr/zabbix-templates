@@ -1,0 +1,1528 @@
+{
+    "zabbix_export": {
+        "version": "7.0",
+        "template_groups": [
+            {
+                "uuid": "36bff6c29af64692839d077febfc7079",
+                "name": "Templates/Network devices"
+            }
+        ],
+        "templates": [
+            {
+                "uuid": "83b26c459e35449a817fbb3eb6699fba",
+                "template": "KeeneticOS by SNMP",
+                "name": "KeeneticOS by SNMP",
+                "description": "KeeneticOS monitoring via SNMP. Collects ICMP/SNMP availability, system information, uptime, CPU load/utilization, memory usage and network interface traffic, status, errors and bandwidth utilization using SNMP walk, dependent items and LLD.\n\nUsed mib:\nUCD-SNMP-MIB\nSNMPv2-MIB\n\nAuthor: Yaroslav Sharaev https://github.com/NicKerrr/zabbix-templates",
+                "vendor": {
+                    "name": "Yaroslav Sharaev",
+                    "version": "0.7"
+                },
+                "groups": [
+                    {
+                        "name": "Templates/Network devices"
+                    }
+                ],
+                "items": [
+                    {
+                        "uuid": "1f3c93f13a3c4420b916f4dd9d1fe533",
+                        "name": "KeeneticOS: ICMP ping",
+                        "type": "SIMPLE",
+                        "key": "icmpping",
+                        "history": "7d",
+                        "tags": [
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "network"
+                            }
+                        ],
+                        "triggers": [
+                            {
+                                "uuid": "42d6f5ed0097436797efa605049e9fe2",
+                                "expression": "max(/KeeneticOS by SNMP/icmpping,#3)=0",
+                                "name": "KeeneticOS: Unavailable by ICMP ping",
+                                "priority": "HIGH",
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "availability"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "a15ad1c2f5704be69f3da4a6d626b92e",
+                        "name": "KeeneticOS: ICMP loss",
+                        "type": "SIMPLE",
+                        "key": "icmppingloss",
+                        "history": "7d",
+                        "value_type": "FLOAT",
+                        "units": "%",
+                        "tags": [
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "network"
+                            }
+                        ],
+                        "triggers": [
+                            {
+                                "uuid": "2abde6e42c024a82bc92bfa5527a8b10",
+                                "expression": "min(/KeeneticOS by SNMP/icmppingloss,5m)>{$ICMP_LOSS_WARN} and min(/KeeneticOS by SNMP/icmppingloss,5m)<100",
+                                "name": "KeeneticOS: High ICMP ping loss",
+                                "opdata": "Loss: {ITEM.LASTVALUE1}",
+                                "priority": "WARNING",
+                                "dependencies": [
+                                    {
+                                        "name": "KeeneticOS: Unavailable by ICMP ping",
+                                        "expression": "max(/KeeneticOS by SNMP/icmpping,#3)=0"
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "availability"
+                                    },
+                                    {
+                                        "tag": "scope",
+                                        "value": "performance"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "514f51a5b8e24a6d83f816e4d7e6b2f1",
+                        "name": "KeeneticOS: ICMP response time",
+                        "type": "SIMPLE",
+                        "key": "icmppingsec",
+                        "history": "7d",
+                        "value_type": "FLOAT",
+                        "units": "s",
+                        "tags": [
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "network"
+                            }
+                        ],
+                        "triggers": [
+                            {
+                                "uuid": "03aee5fdc87b4755982b26b5e70b4287",
+                                "expression": "avg(/KeeneticOS by SNMP/icmppingsec,5m)>{$ICMP_RESPONSE_TIME_WARN}",
+                                "name": "KeeneticOS: High ICMP ping response time",
+                                "opdata": "Value: {ITEM.LASTVALUE1}",
+                                "priority": "WARNING",
+                                "dependencies": [
+                                    {
+                                        "name": "KeeneticOS: High ICMP ping loss",
+                                        "expression": "min(/KeeneticOS by SNMP/icmppingloss,5m)>{$ICMP_LOSS_WARN} and min(/KeeneticOS by SNMP/icmppingloss,5m)<100"
+                                    },
+                                    {
+                                        "name": "KeeneticOS: Unavailable by ICMP ping",
+                                        "expression": "max(/KeeneticOS by SNMP/icmpping,#3)=0"
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "availability"
+                                    },
+                                    {
+                                        "tag": "scope",
+                                        "value": "performance"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "a783d44586984b148de930a94931a268",
+                        "name": "KeeneticOS: CPU Load average 1m",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.cpu.la.1",
+                        "value_type": "FLOAT",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.4.1.2021.10.1.3.1",
+                                    "0"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.cpu.load.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "c5ffbafbdbe04419885d53ce099ab8f3",
+                        "name": "KeeneticOS: CPU Load average 5m",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.cpu.la.5",
+                        "value_type": "FLOAT",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.4.1.2021.10.1.3.2",
+                                    "0"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.cpu.load.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "b06909fbb90b4a0c8034e1a81c88c803",
+                        "name": "KeeneticOS: CPU Load average 15m",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.cpu.la.15",
+                        "value_type": "FLOAT",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.4.1.2021.10.1.3.3",
+                                    "0"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.cpu.load.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "40494ca75c184198ab1ff3a5867f1b5d",
+                        "name": "KeeneticOS: SNMP walk CPU Load",
+                        "type": "SNMP_AGENT",
+                        "snmp_oid": "walk[.1.3.6.1.4.1.2021.10]",
+                        "key": "keenetic.cpu.load.walk",
+                        "history": "0",
+                        "value_type": "TEXT",
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "raw"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "893c5bce87dc4eb599dd0dadd156adc9",
+                        "name": "KeeneticOS: CPU raw idle",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.cpu.raw.idle",
+                        "history": "7d",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.4.1.2021.11.53.0",
+                                    "0"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.cpu.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "c1bfc88d361f49cfb9346c71e86525a5",
+                        "name": "KeeneticOS: CPU raw nice",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.cpu.raw.nice",
+                        "history": "7d",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.4.1.2021.11.51.0",
+                                    "0"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.cpu.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "2bcba2346c01451bbeca95fa50bd3d76",
+                        "name": "KeeneticOS: CPU raw system",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.cpu.raw.system",
+                        "history": "7d",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.4.1.2021.11.52.0",
+                                    "0"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.cpu.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "ad7d6ee6132642919c04c5734c7b3e27",
+                        "name": "KeeneticOS: CPU raw user",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.cpu.raw.user",
+                        "history": "7d",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.4.1.2021.11.50.0",
+                                    "0"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.cpu.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "f624f8cf788a407f8c4e688cc7023a68",
+                        "name": "KeeneticOS: CPU utilization",
+                        "type": "CALCULATED",
+                        "key": "keenetic.cpu.util",
+                        "units": "%",
+                        "params": "100 * (\n  change(//keenetic.cpu.raw.user)\n  + change(//keenetic.cpu.raw.nice)\n  + change(//keenetic.cpu.raw.system)\n) / (\n  change(//keenetic.cpu.raw.user)\n  + change(//keenetic.cpu.raw.nice)\n  + change(//keenetic.cpu.raw.system)\n  + change(//keenetic.cpu.raw.idle)\n)",
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ],
+                        "triggers": [
+                            {
+                                "uuid": "1cc53e12fe0a4932981cf26a7e0e6ad0",
+                                "expression": "min(/KeeneticOS by SNMP/keenetic.cpu.util,5m)>{$CPU.UTIL.MAX}",
+                                "name": "KeeneticOS: High CPU utilization",
+                                "event_name": "KeeneticOS:  High CPU utilization (>{$CPU.UTIL.MAX}% for 5m)",
+                                "priority": "AVERAGE"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "0b1fdf12049b46779f8c042fdaf3e789",
+                        "name": "KeeneticOS: SNMP walk CPU",
+                        "type": "SNMP_AGENT",
+                        "snmp_oid": "walk[.1.3.6.1.4.1.2021.11]",
+                        "key": "keenetic.cpu.walk",
+                        "history": "0",
+                        "value_type": "TEXT",
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "raw"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "21a7057712194f5cbd8f7ff3d1517093",
+                        "name": "KeeneticOS: SNMP walk Hardware Info",
+                        "type": "SNMP_AGENT",
+                        "snmp_oid": "walk[.1.3.6.1.2.1.47.1.1.1.1]",
+                        "key": "keenetic.hardware.walk",
+                        "delay": "1d",
+                        "history": "0",
+                        "value_type": "TEXT",
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "raw"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "d4c99ad42858432b9c1a5a6ea493715b",
+                        "name": "KeeneticOS: Memory available",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.memory.available",
+                        "units": "B",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.4.1.2021.4.6.0",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "MULTIPLIER",
+                                "parameters": [
+                                    "1024"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.memory.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "8020e935ee5d4c9f8bff4e457af39f05",
+                        "name": "KeeneticOS: Memory buffer",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.memory.buffer",
+                        "units": "B",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.4.1.2021.4.14.0",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "MULTIPLIER",
+                                "parameters": [
+                                    "1024"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.memory.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "f2158d64a5204e50bb4eb6a6efbdf85e",
+                        "name": "KeeneticOS: Memory cached",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.memory.cached",
+                        "units": "B",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.4.1.2021.4.15.0",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "MULTIPLIER",
+                                "parameters": [
+                                    "1024"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.memory.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "6e0ecc9dda8c4e17b85d621fdd4bcc01",
+                        "name": "KeeneticOS: Memory shared",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.memory.shared",
+                        "units": "B",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.4.1.2021.4.13.0",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "MULTIPLIER",
+                                "parameters": [
+                                    "1024"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.memory.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "d50225ad8a6a409689fe297d45e83001",
+                        "name": "KeeneticOS: Memory total",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.memory.total",
+                        "units": "B",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.4.1.2021.4.5.0",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "MULTIPLIER",
+                                "parameters": [
+                                    "1024"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.memory.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "8fe3407d950c4359ad85802896c79869",
+                        "name": "KeeneticOS: Memory utilization",
+                        "type": "CALCULATED",
+                        "key": "keenetic.memory.util",
+                        "units": "%",
+                        "params": "100 - ( last(//keenetic.memory.available) / last(//keenetic.memory.total) * 100)",
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ],
+                        "triggers": [
+                            {
+                                "uuid": "90ed1bf9681b4f21b813a5def902c3ec",
+                                "expression": "min(/KeeneticOS by SNMP/keenetic.memory.util,5m)>{$MEMORY.UTIL.MAX}",
+                                "name": "KeeneticOS: High memory utilization",
+                                "event_name": "KeeneticOS:  High memory utilization (>{$MEMORY.UTIL.MAX}% for 5m)",
+                                "priority": "AVERAGE"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "1d3b6a1f03c24161871bccd55f13c608",
+                        "name": "KeeneticOS: SNMP walk Memory",
+                        "type": "SNMP_AGENT",
+                        "snmp_oid": "walk[.1.3.6.1.4.1.2021.4]",
+                        "key": "keenetic.memory.walk",
+                        "history": "0",
+                        "value_type": "TEXT",
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "raw"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "2ba3981bc4a14914b10c063ebf4ef169",
+                        "name": "KeeneticOS: System Description",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.system.description",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.2.1.1.1.0",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "10d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.system.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ],
+                        "triggers": [
+                            {
+                                "uuid": "c960e10a6ee44a27a1d3d3a86d72e536",
+                                "expression": "last(/KeeneticOS by SNMP/keenetic.system.description,#1)<>last(/KeeneticOS by SNMP/keenetic.system.description,#2) and length(last(/KeeneticOS by SNMP/keenetic.system.description))>0",
+                                "name": "KeeneticOS: Operating system description has changed",
+                                "priority": "INFO",
+                                "manual_close": "YES",
+                                "dependencies": [
+                                    {
+                                        "name": "KeeneticOS: System name has changed",
+                                        "expression": "last(/KeeneticOS by SNMP/keenetic.system.name,#1)<>last(/KeeneticOS by SNMP/keenetic.system.name,#2) and length(last(/KeeneticOS by SNMP/keenetic.system.name))>0"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "951dcffbdbc741ce80f9058d0fc3e22e",
+                        "name": "KeeneticOS: System Location",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.system.location",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.2.1.1.6.0",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "10d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.system.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "b78fe81969744ff8bbf33c6a6e06c5dd",
+                        "name": "KeeneticOS: System Manufacturer",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.system.manufacturer",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.2.1.47.1.1.1.1.12",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "10d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.hardware.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "87001777f4af4ee5bfa3ffbe64db6392",
+                        "name": "KeeneticOS: System Model",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.system.model",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.2.1.47.1.1.1.1.13",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "10d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.hardware.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "056e7cd4df914051807f7b6523d7b811",
+                        "name": "KeeneticOS: System Name",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.system.name",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.2.1.1.5.0",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "10d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.system.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ],
+                        "triggers": [
+                            {
+                                "uuid": "20fae47e61484833b11980a29cc36ea0",
+                                "expression": "last(/KeeneticOS by SNMP/keenetic.system.name,#1)<>last(/KeeneticOS by SNMP/keenetic.system.name,#2) and length(last(/KeeneticOS by SNMP/keenetic.system.name))>0",
+                                "name": "KeeneticOS: System name has changed",
+                                "event_name": "KeeneticOS: System name has changed (new name: {ITEM.VALUE})",
+                                "priority": "INFO"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "b82959b4a6d743f99e7d55c6e5466ab6",
+                        "name": "KeeneticOS: System Serial Number",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.system.serial",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.2.1.47.1.1.1.1.11",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "10d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.hardware.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "7f5d0ad94f1045b9be6add305c6be31e",
+                        "name": "KeeneticOS: System Uptime",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.system.uptime",
+                        "trends": "0",
+                        "units": "uptime",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.2.1.1.3.0",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "MULTIPLIER",
+                                "parameters": [
+                                    "0.01"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.system.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ],
+                        "triggers": [
+                            {
+                                "uuid": "aaab32f39c7f47318fdb8170cf48d063",
+                                "expression": "(last(/KeeneticOS by SNMP/keenetic.system.uptime)>0 and last(/KeeneticOS by SNMP/keenetic.system.uptime)<10m) or (last(/KeeneticOS by SNMP/keenetic.system.uptime)=0 and last(/KeeneticOS by SNMP/keenetic.system.uptime)<10m)",
+                                "name": "KeeneticOS: Host has been restarted",
+                                "event_name": "KeeneticOS: {HOST.NAME} has been restarted (uptime < 10m)",
+                                "priority": "WARNING",
+                                "manual_close": "YES",
+                                "dependencies": [
+                                    {
+                                        "name": "KeeneticOS: Unavailable by ICMP ping",
+                                        "expression": "max(/KeeneticOS by SNMP/icmpping,#3)=0"
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "notice"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "e2cfd85db55048aa96557f72408a705c",
+                        "name": "KeeneticOS: System CID",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.system.uuid",
+                        "value_type": "TEXT",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.2.1.47.1.1.1.1.19",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "DISCARD_UNCHANGED_HEARTBEAT",
+                                "parameters": [
+                                    "10d"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.hardware.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "8055c80e756c46d78efe576beb489f48",
+                        "name": "KeeneticOS: SNMP walk System Info",
+                        "type": "SNMP_AGENT",
+                        "snmp_oid": "walk[.1.3.6.1.2.1.1]",
+                        "key": "keenetic.system.walk",
+                        "delay": "10m",
+                        "history": "0",
+                        "value_type": "TEXT",
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "raw"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "653604c1743741af8c7ad32c3ba75de0",
+                        "name": "KeeneticOS: SNMP agent availability",
+                        "type": "INTERNAL",
+                        "key": "zabbix[host,snmp,available]",
+                        "history": "7d",
+                        "tags": [
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "network"
+                            }
+                        ],
+                        "triggers": [
+                            {
+                                "uuid": "eccad940e65f4d1d8b176f373eb9642c",
+                                "expression": "max(/KeeneticOS by SNMP/zabbix[host,snmp,available],{$SNMP.TIMEOUT})=0",
+                                "name": "KeeneticOS: No SNMP data collection",
+                                "opdata": "Current state: {ITEM.LASTVALUE1}",
+                                "priority": "WARNING",
+                                "dependencies": [
+                                    {
+                                        "name": "KeeneticOS: Unavailable by ICMP ping",
+                                        "expression": "max(/KeeneticOS by SNMP/icmpping,#3)=0"
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "availability"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "discovery_rules": [
+                    {
+                        "uuid": "5213d9f64d1645f4a9dab69d94012ee1",
+                        "name": "KeeneticOS: Network interfaces discovery",
+                        "type": "SNMP_AGENT",
+                        "snmp_oid": "discovery[{#IFDESCR},.1.3.6.1.2.1.2.2.1.2,{#IFNAME},.1.3.6.1.2.1.31.1.1.1.1,{#IFALIAS},.1.3.6.1.2.1.31.1.1.1.18,{#IFTYPE},.1.3.6.1.2.1.2.2.1.3,{#IFADMINSTATUS},.1.3.6.1.2.1.2.2.1.7,{#IFOPERSTATUS},.1.3.6.1.2.1.2.2.1.8]",
+                        "key": "keenetic.net.if.discovery",
+                        "delay": "1h",
+                        "filter": {
+                            "evaltype": "AND",
+                            "conditions": [
+                                {
+                                    "macro": "{#IFADMINSTATUS}",
+                                    "value": "{$NET.IF.IFADMINSTATUS.MATCHES}"
+                                },
+                                {
+                                    "macro": "{#IFADMINSTATUS}",
+                                    "value": "{$NET.IF.IFADMINSTATUS.NOT_MATCHES}",
+                                    "operator": "NOT_MATCHES_REGEX"
+                                },
+                                {
+                                    "macro": "{#IFALIAS}",
+                                    "value": "{$NET.IF.IFALIAS.MATCHES}"
+                                },
+                                {
+                                    "macro": "{#IFALIAS}",
+                                    "value": "{$NET.IF.IFALIAS.NOT_MATCHES}",
+                                    "operator": "NOT_MATCHES_REGEX"
+                                },
+                                {
+                                    "macro": "{#IFDESCR}",
+                                    "value": "{$NET.IF.IFDESCR.MATCHES}"
+                                },
+                                {
+                                    "macro": "{#IFDESCR}",
+                                    "value": "{$NET.IF.IFDESCR.NOT_MATCHES}",
+                                    "operator": "NOT_MATCHES_REGEX"
+                                },
+                                {
+                                    "macro": "{#IFNAME}",
+                                    "value": "{$NET.IF.IFNAME.MATCHES}"
+                                },
+                                {
+                                    "macro": "{#IFNAME}",
+                                    "value": "{$NET.IF.IFNAME.NOT_MATCHES}",
+                                    "operator": "NOT_MATCHES_REGEX"
+                                },
+                                {
+                                    "macro": "{#IFOPERSTATUS}",
+                                    "value": "{$NET.IF.IFOPERSTATUS.MATCHES}"
+                                },
+                                {
+                                    "macro": "{#IFOPERSTATUS}",
+                                    "value": "{$NET.IF.IFOPERSTATUS.NOT_MATCHES}",
+                                    "operator": "NOT_MATCHES_REGEX"
+                                }
+                            ]
+                        },
+                        "enabled_lifetime_type": "DISABLE_NEVER",
+                        "item_prototypes": [
+                            {
+                                "uuid": "57b3754e92764f638e534e33113cf894",
+                                "name": "Interface {#IFNAME}({#IFALIAS}): Inbound packets discarded",
+                                "type": "SNMP_AGENT",
+                                "snmp_oid": "get[.1.3.6.1.2.1.2.2.1.13.{#SNMPINDEX}]",
+                                "key": "net.if.in.discard[{#SNMPINDEX}]",
+                                "preprocessing": [
+                                    {
+                                        "type": "CHANGE_PER_SECOND"
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "KeeneticOS"
+                                    },
+                                    {
+                                        "tag": "interface",
+                                        "value": "{#IFNAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "e71fb70b9766466bb2458b9702a819a1",
+                                "name": "Interface {#IFNAME}({#IFALIAS}): Inbound packets with errors",
+                                "type": "SNMP_AGENT",
+                                "snmp_oid": "get[.1.3.6.1.2.1.2.2.1.14.{#SNMPINDEX}]",
+                                "key": "net.if.in.errors[{#SNMPINDEX}]",
+                                "preprocessing": [
+                                    {
+                                        "type": "CHANGE_PER_SECOND"
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "KeeneticOS"
+                                    },
+                                    {
+                                        "tag": "interface",
+                                        "value": "{#IFNAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "6401c1bf7ae544a48f0e4b7a09ddad3c",
+                                "name": "Interface {#IFNAME}({#IFALIAS}): Bits received",
+                                "type": "SNMP_AGENT",
+                                "snmp_oid": "get[.1.3.6.1.2.1.31.1.1.1.6.{#SNMPINDEX}]",
+                                "key": "net.if.in[{#SNMPINDEX}]",
+                                "units": "bps",
+                                "preprocessing": [
+                                    {
+                                        "type": "CHANGE_PER_SECOND"
+                                    },
+                                    {
+                                        "type": "MULTIPLIER",
+                                        "parameters": [
+                                            "8"
+                                        ]
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "KeeneticOS"
+                                    },
+                                    {
+                                        "tag": "interface",
+                                        "value": "{#IFNAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "2e41b349f3a54a54ace8a7772aef5777",
+                                "name": "Interface {#IFNAME}({#IFALIAS}): Outbound packets discarded",
+                                "type": "SNMP_AGENT",
+                                "snmp_oid": "get[.1.3.6.1.2.1.2.2.1.19.{#SNMPINDEX}]",
+                                "key": "net.if.out.discard[{#SNMPINDEX}]",
+                                "preprocessing": [
+                                    {
+                                        "type": "CHANGE_PER_SECOND"
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "KeeneticOS"
+                                    },
+                                    {
+                                        "tag": "interface",
+                                        "value": "{#IFNAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "fc754a3ab56b46be9a094be7cbc624bb",
+                                "name": "Interface {#IFNAME}({#IFALIAS}): Outbound packets with errors",
+                                "type": "SNMP_AGENT",
+                                "snmp_oid": "get[.1.3.6.1.2.1.2.2.1.20.{#SNMPINDEX}]",
+                                "key": "net.if.out.errors[{#SNMPINDEX}]",
+                                "preprocessing": [
+                                    {
+                                        "type": "CHANGE_PER_SECOND"
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "KeeneticOS"
+                                    },
+                                    {
+                                        "tag": "interface",
+                                        "value": "{#IFNAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "9eb1bb2f9acb450d8252fb14962fbeec",
+                                "name": "Interface {#IFNAME}({#IFALIAS}): Bits sent",
+                                "type": "SNMP_AGENT",
+                                "snmp_oid": "get[.1.3.6.1.2.1.31.1.1.1.10.{#SNMPINDEX}]",
+                                "key": "net.if.out[{#SNMPINDEX}]",
+                                "units": "bps",
+                                "preprocessing": [
+                                    {
+                                        "type": "CHANGE_PER_SECOND"
+                                    },
+                                    {
+                                        "type": "MULTIPLIER",
+                                        "parameters": [
+                                            "8"
+                                        ]
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "KeeneticOS"
+                                    },
+                                    {
+                                        "tag": "interface",
+                                        "value": "{#IFNAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "ec9e292a0cea4037896410bf39ed16b8",
+                                "name": "Interface {#IFNAME}({#IFALIAS}): Speed",
+                                "type": "SNMP_AGENT",
+                                "snmp_oid": "get[.1.3.6.1.2.1.31.1.1.1.15.{#SNMPINDEX}]",
+                                "key": "net.if.speed[{#SNMPINDEX}]",
+                                "delay": "10m",
+                                "units": "bps",
+                                "preprocessing": [
+                                    {
+                                        "type": "MULTIPLIER",
+                                        "parameters": [
+                                            "1000000"
+                                        ]
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "KeeneticOS"
+                                    },
+                                    {
+                                        "tag": "interface",
+                                        "value": "{#IFNAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "c69ecda184914309a038e33589c7fe29",
+                                "name": "Interface {#IFNAME}({#IFALIAS}): Admin status",
+                                "type": "SNMP_AGENT",
+                                "snmp_oid": "get[.1.3.6.1.2.1.2.2.1.7.{#SNMPINDEX}]",
+                                "key": "net.if.status.admin[{#SNMPINDEX}]",
+                                "valuemap": {
+                                    "name": "Interface admin status"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "KeeneticOS"
+                                    },
+                                    {
+                                        "tag": "interface",
+                                        "value": "{#IFNAME}"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "be1147c2e2ed4fa498423fbbb0869f8b",
+                                "name": "Interface {#IFNAME}({#IFALIAS}): Operational status",
+                                "type": "SNMP_AGENT",
+                                "snmp_oid": "get[.1.3.6.1.2.1.2.2.1.8.{#SNMPINDEX}]",
+                                "key": "net.if.status.oper[{#SNMPINDEX}]",
+                                "valuemap": {
+                                    "name": "Interface operational status"
+                                },
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "KeeneticOS"
+                                    },
+                                    {
+                                        "tag": "interface",
+                                        "value": "{#IFNAME}"
+                                    }
+                                ]
+                            }
+                        ],
+                        "trigger_prototypes": [
+                            {
+                                "uuid": "c62c72812c814363933093948ab19aa7",
+                                "expression": "(avg(/KeeneticOS by SNMP/net.if.in[{#SNMPINDEX}],15m)>({$IF.UTIL.MAX:\"{#IFNAME}\"}/100)*last(/KeeneticOS by SNMP/net.if.speed[{#SNMPINDEX}]) or\navg(/KeeneticOS by SNMP/net.if.out[{#SNMPINDEX}],15m)>({$IF.UTIL.MAX:\"{#IFNAME}\"}/100)*last(/KeeneticOS by SNMP/net.if.speed[{#SNMPINDEX}])) and\nlast(/KeeneticOS by SNMP/net.if.speed[{#SNMPINDEX}])>0",
+                                "recovery_mode": "RECOVERY_EXPRESSION",
+                                "recovery_expression": "avg(/KeeneticOS by SNMP/net.if.in[{#SNMPINDEX}],15m)<(({$IF.UTIL.MAX:\"{#IFNAME}\"}-3)/100)*last(/KeeneticOS by SNMP/net.if.speed[{#SNMPINDEX}]) and\navg(/KeeneticOS by SNMP/net.if.out[{#SNMPINDEX}],15m)<(({$IF.UTIL.MAX:\"{#IFNAME}\"}-3)/100)*last(/KeeneticOS by SNMP/net.if.speed[{#SNMPINDEX}])",
+                                "name": "Interface {#IFNAME}({#IFALIAS}): High bandwidth usage",
+                                "event_name": "Interface {#IFNAME}({#IFALIAS}): High bandwidth usage (>{$IF.UTIL.MAX:\"{#IFNAME}\"}%)",
+                                "opdata": "In: {ITEM.LASTVALUE1}, out: {ITEM.LASTVALUE3}, speed: {ITEM.LASTVALUE2}",
+                                "priority": "WARNING",
+                                "manual_close": "YES",
+                                "dependencies": [
+                                    {
+                                        "name": "Interface {#IFNAME}({#IFALIAS}): Link down",
+                                        "expression": "last(/KeeneticOS by SNMP/net.if.status.oper[{#SNMPINDEX}])=2\nand\nlast(/KeeneticOS by SNMP/net.if.status.admin[{#SNMPINDEX}])=1"
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "performance"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "9a665406ab9e42b78e99d5c1f4d7e6bc",
+                                "expression": "min(/KeeneticOS by SNMP/net.if.in.errors[{#SNMPINDEX}],5m)>{$IF.ERRORS.WARN:\"{#IFNAME}\"}\nor min(/KeeneticOS by SNMP/net.if.out.errors[{#SNMPINDEX}],5m)>{$IF.ERRORS.WARN:\"{#IFNAME}\"}",
+                                "recovery_mode": "RECOVERY_EXPRESSION",
+                                "recovery_expression": "max(/KeeneticOS by SNMP/net.if.in.errors[{#SNMPINDEX}],5m)<{$IF.ERRORS.WARN:\"{#IFNAME}\"}*0.8\nand max(/KeeneticOS by SNMP/net.if.out.errors[{#SNMPINDEX}],5m)<{$IF.ERRORS.WARN:\"{#IFNAME}\"}*0.8",
+                                "name": "Interface {#IFNAME}({#IFALIAS}): High error rate",
+                                "event_name": "Interface {#IFNAME}({#IFALIAS}): High error rate (>{$IF.ERRORS.WARN:\"{#IFNAME}\"} for 5m)",
+                                "opdata": "errors in: {ITEM.LASTVALUE1}, errors out: {ITEM.LASTVALUE2}",
+                                "priority": "WARNING",
+                                "manual_close": "YES",
+                                "dependencies": [
+                                    {
+                                        "name": "Interface {#IFNAME}({#IFALIAS}): Link down",
+                                        "expression": "last(/KeeneticOS by SNMP/net.if.status.oper[{#SNMPINDEX}])=2\nand\nlast(/KeeneticOS by SNMP/net.if.status.admin[{#SNMPINDEX}])=1"
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "availability"
+                                    },
+                                    {
+                                        "tag": "scope",
+                                        "value": "performance"
+                                    }
+                                ]
+                            },
+                            {
+                                "uuid": "36332a04415e476dae72aa472b1cf1b3",
+                                "expression": "last(/KeeneticOS by SNMP/net.if.status.oper[{#SNMPINDEX}])=2\nand\nlast(/KeeneticOS by SNMP/net.if.status.admin[{#SNMPINDEX}])=1",
+                                "name": "Interface {#IFNAME}({#IFALIAS}): Link down",
+                                "priority": "AVERAGE",
+                                "tags": [
+                                    {
+                                        "tag": "application",
+                                        "value": "keenetic"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "macros": [
+                    {
+                        "macro": "{$CPU.UTIL.MAX}",
+                        "value": "90"
+                    },
+                    {
+                        "macro": "{$ICMP_LOSS_WARN}",
+                        "value": "20"
+                    },
+                    {
+                        "macro": "{$ICMP_RESPONSE_TIME_WARN}",
+                        "value": "0.15"
+                    },
+                    {
+                        "macro": "{$IF.ERRORS.WARN}",
+                        "value": "2"
+                    },
+                    {
+                        "macro": "{$MEMORY.UTIL.MAX}",
+                        "value": "90"
+                    },
+                    {
+                        "macro": "{$NET.IF.IFADMINSTATUS.MATCHES}",
+                        "value": "^.*"
+                    },
+                    {
+                        "macro": "{$NET.IF.IFADMINSTATUS.NOT_MATCHES}",
+                        "value": "^2$",
+                        "description": "Ignore down(2) administrative status"
+                    },
+                    {
+                        "macro": "{$NET.IF.IFALIAS.MATCHES}",
+                        "value": ".*"
+                    },
+                    {
+                        "macro": "{$NET.IF.IFALIAS.NOT_MATCHES}",
+                        "value": "CHANGE_IF_NEEDED"
+                    },
+                    {
+                        "macro": "{$NET.IF.IFDESCR.MATCHES}",
+                        "value": ".*"
+                    },
+                    {
+                        "macro": "{$NET.IF.IFDESCR.NOT_MATCHES}",
+                        "value": "CHANGE_IF_NEEDED"
+                    },
+                    {
+                        "macro": "{$NET.IF.IFNAME.MATCHES}",
+                        "value": "^.*$"
+                    },
+                    {
+                        "macro": "{$NET.IF.IFNAME.NOT_MATCHES}",
+                        "value": "(^Software Loopback Interface|^NULL[0-9.]*$|^[Ll]o[0-9.]*$|^[Ss]ystem$|^Nu[0-9.]*$|^veth[0-9a-z]+$|docker[0-9]+|br-[a-z0-9]{12})",
+                        "description": "Filter out loopbacks, nulls, docker veth links and docker0 bridge by default"
+                    },
+                    {
+                        "macro": "{$NET.IF.IFOPERSTATUS.MATCHES}",
+                        "value": "^.*$"
+                    },
+                    {
+                        "macro": "{$NET.IF.IFOPERSTATUS.NOT_MATCHES}",
+                        "value": "^6$",
+                        "description": "Ignore notPresent(6)"
+                    },
+                    {
+                        "macro": "{$SNMP.TIMEOUT}",
+                        "value": "5m"
+                    }
+                ],
+                "valuemaps": [
+                    {
+                        "uuid": "33bae8505c7a4a8aa649e4d2c3f41c7c",
+                        "name": "Interface admin status",
+                        "mappings": [
+                            {
+                                "value": "1",
+                                "newvalue": "up"
+                            },
+                            {
+                                "value": "2",
+                                "newvalue": "down"
+                            },
+                            {
+                                "value": "3",
+                                "newvalue": "testing"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "63646bc44b4a45f5b741cb304bf942ec",
+                        "name": "Interface operational status",
+                        "mappings": [
+                            {
+                                "value": "1",
+                                "newvalue": "up"
+                            },
+                            {
+                                "value": "2",
+                                "newvalue": "down"
+                            },
+                            {
+                                "value": "3",
+                                "newvalue": "testing"
+                            },
+                            {
+                                "value": "4",
+                                "newvalue": "unknown"
+                            },
+                            {
+                                "value": "5",
+                                "newvalue": "dormant"
+                            },
+                            {
+                                "value": "6",
+                                "newvalue": "notPresent"
+                            },
+                            {
+                                "value": "7",
+                                "newvalue": "lowerLayerDown"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "4370f5b13bef46419ce1b724a35f8115",
+                        "name": "zabbix.host.available",
+                        "mappings": [
+                            {
+                                "value": "0",
+                                "newvalue": "not available"
+                            },
+                            {
+                                "value": "1",
+                                "newvalue": "available"
+                            },
+                            {
+                                "value": "2",
+                                "newvalue": "unknown"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
