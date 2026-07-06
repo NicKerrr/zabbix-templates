@@ -15,7 +15,7 @@
                 "description": "LibreHardwareMonitor monitoring via HTTP API. Discovers CPU, GPU, NVMe, HDD/SSD temperature sensors and fan speed sensors, collects hardware metrics from data.json and creates temperature threshold triggers.\n\n\nAuthor: Yaroslav Sharaev https://github.com/NicKerrr/zabbix-templates",
                 "vendor": {
                     "name": "Yaroslav Sharaev",
-                    "version": "0.8.1"
+                    "version": "0.8.2"
                 },
                 "groups": [
                     {
@@ -28,7 +28,7 @@
                         "name": "LHM Raw Data",
                         "type": "HTTP_AGENT",
                         "key": "lhm.raw.data",
-                        "delay": "10s",
+                        "delay": "5s",
                         "history": "0",
                         "value_type": "TEXT",
                         "authtype": "BASIC",
@@ -154,8 +154,8 @@
                                         "priority": "WARNING",
                                         "dependencies": [
                                             {
-                                                "name": "Hardware: CPU [{#CPU.TEMP.NAME}] temperature is high",
-                                                "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.cpu.temp[\"{#CPU.TEMP.ID}\"],5m)>{$CPU.TEMP.HIGH}"
+                                                "name": "Hardware: CPU [{#CPU.TEMP.NAME}] temperature is average",
+                                                "expression": "avg(/LibreHardwareMonitor by HTTP/lhm.cpu.temp[\"{#CPU.TEMP.ID}\"],5m)>{$CPU.TEMP.AVERAGE}"
                                             }
                                         ],
                                         "tags": [
