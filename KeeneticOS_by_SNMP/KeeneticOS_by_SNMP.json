@@ -15,7 +15,7 @@
                 "description": "KeeneticOS monitoring via SNMP. Collects ICMP/SNMP availability, system information, uptime, CPU load/utilization, memory usage and network interface traffic, status, errors and bandwidth utilization using SNMP walk, dependent items and LLD.\n\nUsed mib:\nUCD-SNMP-MIB\nSNMPv2-MIB\n\nAuthor: Yaroslav Sharaev https://github.com/NicKerrr/zabbix-templates",
                 "vendor": {
                     "name": "Yaroslav Sharaev",
-                    "version": "0.7"
+                    "version": "0.8"
                 },
                 "groups": [
                     {
@@ -656,6 +656,25 @@
                         ]
                     },
                     {
+                        "uuid": "76f68bc4f0a54901b262ab21b165f070",
+                        "name": "KeeneticOS: SNMP walk Interface Info",
+                        "type": "SNMP_AGENT",
+                        "snmp_oid": "walk[.1.3.6.1.2.1.2.2.1,.1.3.6.1.2.1.31.1.1.1]",
+                        "key": "keenetic.netif.walk",
+                        "history": "0",
+                        "value_type": "TEXT",
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "raw"
+                            }
+                        ]
+                    },
+                    {
                         "uuid": "2ba3981bc4a14914b10c063ebf4ef169",
                         "name": "KeeneticOS: System Description",
                         "type": "DEPENDENT",
@@ -1045,10 +1064,8 @@
                     {
                         "uuid": "5213d9f64d1645f4a9dab69d94012ee1",
                         "name": "KeeneticOS: Network interfaces discovery",
-                        "type": "SNMP_AGENT",
-                        "snmp_oid": "discovery[{#IFDESCR},.1.3.6.1.2.1.2.2.1.2,{#IFNAME},.1.3.6.1.2.1.31.1.1.1.1,{#IFALIAS},.1.3.6.1.2.1.31.1.1.1.18,{#IFTYPE},.1.3.6.1.2.1.2.2.1.3,{#IFADMINSTATUS},.1.3.6.1.2.1.2.2.1.7,{#IFOPERSTATUS},.1.3.6.1.2.1.2.2.1.8]",
+                        "type": "DEPENDENT",
                         "key": "keenetic.net.if.discovery",
-                        "delay": "1h",
                         "filter": {
                             "evaltype": "AND",
                             "conditions": [
@@ -1104,14 +1121,23 @@
                             {
                                 "uuid": "57b3754e92764f638e534e33113cf894",
                                 "name": "Interface {#IFNAME}({#IFALIAS}): Inbound packets discarded",
-                                "type": "SNMP_AGENT",
-                                "snmp_oid": "get[.1.3.6.1.2.1.2.2.1.13.{#SNMPINDEX}]",
+                                "type": "DEPENDENT",
                                 "key": "net.if.in.discard[{#SNMPINDEX}]",
                                 "preprocessing": [
+                                    {
+                                        "type": "SNMP_WALK_VALUE",
+                                        "parameters": [
+                                            ".1.3.6.1.2.1.2.2.1.13.{#SNMPINDEX}",
+                                            "0"
+                                        ]
+                                    },
                                     {
                                         "type": "CHANGE_PER_SECOND"
                                     }
                                 ],
+                                "master_item": {
+                                    "key": "keenetic.netif.walk"
+                                },
                                 "tags": [
                                     {
                                         "tag": "application",
@@ -1126,14 +1152,23 @@
                             {
                                 "uuid": "e71fb70b9766466bb2458b9702a819a1",
                                 "name": "Interface {#IFNAME}({#IFALIAS}): Inbound packets with errors",
-                                "type": "SNMP_AGENT",
-                                "snmp_oid": "get[.1.3.6.1.2.1.2.2.1.14.{#SNMPINDEX}]",
+                                "type": "DEPENDENT",
                                 "key": "net.if.in.errors[{#SNMPINDEX}]",
                                 "preprocessing": [
+                                    {
+                                        "type": "SNMP_WALK_VALUE",
+                                        "parameters": [
+                                            ".1.3.6.1.2.1.2.2.1.14.{#SNMPINDEX}",
+                                            "0"
+                                        ]
+                                    },
                                     {
                                         "type": "CHANGE_PER_SECOND"
                                     }
                                 ],
+                                "master_item": {
+                                    "key": "keenetic.netif.walk"
+                                },
                                 "tags": [
                                     {
                                         "tag": "application",
@@ -1148,11 +1183,17 @@
                             {
                                 "uuid": "6401c1bf7ae544a48f0e4b7a09ddad3c",
                                 "name": "Interface {#IFNAME}({#IFALIAS}): Bits received",
-                                "type": "SNMP_AGENT",
-                                "snmp_oid": "get[.1.3.6.1.2.1.31.1.1.1.6.{#SNMPINDEX}]",
+                                "type": "DEPENDENT",
                                 "key": "net.if.in[{#SNMPINDEX}]",
                                 "units": "bps",
                                 "preprocessing": [
+                                    {
+                                        "type": "SNMP_WALK_VALUE",
+                                        "parameters": [
+                                            ".1.3.6.1.2.1.31.1.1.1.6.{#SNMPINDEX}",
+                                            "0"
+                                        ]
+                                    },
                                     {
                                         "type": "CHANGE_PER_SECOND"
                                     },
@@ -1163,6 +1204,9 @@
                                         ]
                                     }
                                 ],
+                                "master_item": {
+                                    "key": "keenetic.netif.walk"
+                                },
                                 "tags": [
                                     {
                                         "tag": "application",
@@ -1177,14 +1221,23 @@
                             {
                                 "uuid": "2e41b349f3a54a54ace8a7772aef5777",
                                 "name": "Interface {#IFNAME}({#IFALIAS}): Outbound packets discarded",
-                                "type": "SNMP_AGENT",
-                                "snmp_oid": "get[.1.3.6.1.2.1.2.2.1.19.{#SNMPINDEX}]",
+                                "type": "DEPENDENT",
                                 "key": "net.if.out.discard[{#SNMPINDEX}]",
                                 "preprocessing": [
+                                    {
+                                        "type": "SNMP_WALK_VALUE",
+                                        "parameters": [
+                                            ".1.3.6.1.2.1.2.2.1.19.{#SNMPINDEX}",
+                                            "0"
+                                        ]
+                                    },
                                     {
                                         "type": "CHANGE_PER_SECOND"
                                     }
                                 ],
+                                "master_item": {
+                                    "key": "keenetic.netif.walk"
+                                },
                                 "tags": [
                                     {
                                         "tag": "application",
@@ -1199,14 +1252,23 @@
                             {
                                 "uuid": "fc754a3ab56b46be9a094be7cbc624bb",
                                 "name": "Interface {#IFNAME}({#IFALIAS}): Outbound packets with errors",
-                                "type": "SNMP_AGENT",
-                                "snmp_oid": "get[.1.3.6.1.2.1.2.2.1.20.{#SNMPINDEX}]",
+                                "type": "DEPENDENT",
                                 "key": "net.if.out.errors[{#SNMPINDEX}]",
                                 "preprocessing": [
+                                    {
+                                        "type": "SNMP_WALK_VALUE",
+                                        "parameters": [
+                                            ".1.3.6.1.2.1.2.2.1.20.{#SNMPINDEX}",
+                                            "0"
+                                        ]
+                                    },
                                     {
                                         "type": "CHANGE_PER_SECOND"
                                     }
                                 ],
+                                "master_item": {
+                                    "key": "keenetic.netif.walk"
+                                },
                                 "tags": [
                                     {
                                         "tag": "application",
@@ -1221,11 +1283,17 @@
                             {
                                 "uuid": "9eb1bb2f9acb450d8252fb14962fbeec",
                                 "name": "Interface {#IFNAME}({#IFALIAS}): Bits sent",
-                                "type": "SNMP_AGENT",
-                                "snmp_oid": "get[.1.3.6.1.2.1.31.1.1.1.10.{#SNMPINDEX}]",
+                                "type": "DEPENDENT",
                                 "key": "net.if.out[{#SNMPINDEX}]",
                                 "units": "bps",
                                 "preprocessing": [
+                                    {
+                                        "type": "SNMP_WALK_VALUE",
+                                        "parameters": [
+                                            ".1.3.6.1.2.1.31.1.1.1.10.{#SNMPINDEX}",
+                                            "0"
+                                        ]
+                                    },
                                     {
                                         "type": "CHANGE_PER_SECOND"
                                     },
@@ -1236,6 +1304,9 @@
                                         ]
                                     }
                                 ],
+                                "master_item": {
+                                    "key": "keenetic.netif.walk"
+                                },
                                 "tags": [
                                     {
                                         "tag": "application",
@@ -1250,12 +1321,17 @@
                             {
                                 "uuid": "ec9e292a0cea4037896410bf39ed16b8",
                                 "name": "Interface {#IFNAME}({#IFALIAS}): Speed",
-                                "type": "SNMP_AGENT",
-                                "snmp_oid": "get[.1.3.6.1.2.1.31.1.1.1.15.{#SNMPINDEX}]",
+                                "type": "DEPENDENT",
                                 "key": "net.if.speed[{#SNMPINDEX}]",
-                                "delay": "10m",
                                 "units": "bps",
                                 "preprocessing": [
+                                    {
+                                        "type": "SNMP_WALK_VALUE",
+                                        "parameters": [
+                                            ".1.3.6.1.2.1.31.1.1.1.15.{#SNMPINDEX}",
+                                            "0"
+                                        ]
+                                    },
                                     {
                                         "type": "MULTIPLIER",
                                         "parameters": [
@@ -1263,6 +1339,9 @@
                                         ]
                                     }
                                 ],
+                                "master_item": {
+                                    "key": "keenetic.netif.walk"
+                                },
                                 "tags": [
                                     {
                                         "tag": "application",
@@ -1277,11 +1356,22 @@
                             {
                                 "uuid": "c69ecda184914309a038e33589c7fe29",
                                 "name": "Interface {#IFNAME}({#IFALIAS}): Admin status",
-                                "type": "SNMP_AGENT",
-                                "snmp_oid": "get[.1.3.6.1.2.1.2.2.1.7.{#SNMPINDEX}]",
+                                "type": "DEPENDENT",
                                 "key": "net.if.status.admin[{#SNMPINDEX}]",
                                 "valuemap": {
                                     "name": "Interface admin status"
+                                },
+                                "preprocessing": [
+                                    {
+                                        "type": "SNMP_WALK_VALUE",
+                                        "parameters": [
+                                            ".1.3.6.1.2.1.2.2.1.7.{#SNMPINDEX}",
+                                            "0"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "keenetic.netif.walk"
                                 },
                                 "tags": [
                                     {
@@ -1297,11 +1387,22 @@
                             {
                                 "uuid": "be1147c2e2ed4fa498423fbbb0869f8b",
                                 "name": "Interface {#IFNAME}({#IFALIAS}): Operational status",
-                                "type": "SNMP_AGENT",
-                                "snmp_oid": "get[.1.3.6.1.2.1.2.2.1.8.{#SNMPINDEX}]",
+                                "type": "DEPENDENT",
                                 "key": "net.if.status.oper[{#SNMPINDEX}]",
                                 "valuemap": {
                                     "name": "Interface operational status"
+                                },
+                                "preprocessing": [
+                                    {
+                                        "type": "SNMP_WALK_VALUE",
+                                        "parameters": [
+                                            ".1.3.6.1.2.1.2.2.1.8.{#SNMPINDEX}",
+                                            "0"
+                                        ]
+                                    }
+                                ],
+                                "master_item": {
+                                    "key": "keenetic.netif.walk"
                                 },
                                 "tags": [
                                     {
@@ -1376,6 +1477,34 @@
                                         "tag": "application",
                                         "value": "keenetic"
                                     }
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.netif.walk"
+                        },
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_TO_JSON",
+                                "parameters": [
+                                    "{#IFNAME}",
+                                    ".1.3.6.1.2.1.31.1.1.1.1",
+                                    "0",
+                                    "{#IFALIAS}",
+                                    ".1.3.6.1.2.1.31.1.1.1.18",
+                                    "0",
+                                    "{#IFHIGHSPEED}",
+                                    ".1.3.6.1.2.1.31.1.1.1.15",
+                                    "0",
+                                    "{#IFDESCR}",
+                                    ".1.3.6.1.2.1.2.2.1.2",
+                                    "0",
+                                    "{#IFADMINSTATUS}",
+                                    "1.3.6.1.2.1.2.2.1.7",
+                                    "0",
+                                    "{#IFOPERSTATUS}",
+                                    ".1.3.6.1.2.1.2.2.1.8",
+                                    "0"
                                 ]
                             }
                         ]
