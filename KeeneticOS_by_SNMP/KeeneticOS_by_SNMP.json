@@ -15,7 +15,7 @@
                 "description": "KeeneticOS monitoring via SNMP. Collects ICMP/SNMP availability, system information, uptime, CPU load/utilization, memory usage and network interface traffic, status, errors and bandwidth utilization using SNMP walk, dependent items and LLD.\n\nUsed mib:\nUCD-SNMP-MIB\nSNMPv2-MIB\n\nAuthor: Yaroslav Sharaev https://github.com/NicKerrr/zabbix-templates",
                 "vendor": {
                     "name": "Yaroslav Sharaev",
-                    "version": "0.8"
+                    "version": "0.8.1"
                 },
                 "groups": [
                     {
@@ -435,41 +435,6 @@
                         ]
                     },
                     {
-                        "uuid": "d4c99ad42858432b9c1a5a6ea493715b",
-                        "name": "KeeneticOS: Memory available",
-                        "type": "DEPENDENT",
-                        "key": "keenetic.memory.available",
-                        "units": "B",
-                        "preprocessing": [
-                            {
-                                "type": "SNMP_WALK_VALUE",
-                                "parameters": [
-                                    ".1.3.6.1.4.1.2021.4.6.0",
-                                    "0"
-                                ]
-                            },
-                            {
-                                "type": "MULTIPLIER",
-                                "parameters": [
-                                    "1024"
-                                ]
-                            }
-                        ],
-                        "master_item": {
-                            "key": "keenetic.memory.walk"
-                        },
-                        "tags": [
-                            {
-                                "tag": "application",
-                                "value": "KeeneticOS"
-                            },
-                            {
-                                "tag": "component",
-                                "value": "health"
-                            }
-                        ]
-                    },
-                    {
                         "uuid": "8020e935ee5d4c9f8bff4e457af39f05",
                         "name": "KeeneticOS: Memory buffer",
                         "type": "DEPENDENT",
@@ -515,6 +480,41 @@
                                 "type": "SNMP_WALK_VALUE",
                                 "parameters": [
                                     ".1.3.6.1.4.1.2021.4.15.0",
+                                    "0"
+                                ]
+                            },
+                            {
+                                "type": "MULTIPLIER",
+                                "parameters": [
+                                    "1024"
+                                ]
+                            }
+                        ],
+                        "master_item": {
+                            "key": "keenetic.memory.walk"
+                        },
+                        "tags": [
+                            {
+                                "tag": "application",
+                                "value": "KeeneticOS"
+                            },
+                            {
+                                "tag": "component",
+                                "value": "health"
+                            }
+                        ]
+                    },
+                    {
+                        "uuid": "d4c99ad42858432b9c1a5a6ea493715b",
+                        "name": "KeeneticOS: Memory free",
+                        "type": "DEPENDENT",
+                        "key": "keenetic.memory.free",
+                        "units": "B",
+                        "preprocessing": [
+                            {
+                                "type": "SNMP_WALK_VALUE",
+                                "parameters": [
+                                    ".1.3.6.1.4.1.2021.4.6.0",
                                     "0"
                                 ]
                             },
@@ -615,7 +615,7 @@
                         "type": "CALCULATED",
                         "key": "keenetic.memory.util",
                         "units": "%",
-                        "params": "100 - ( last(//keenetic.memory.available) / last(//keenetic.memory.total) * 100)",
+                        "params": "(last(//keenetic.memory.total)-(last(//keenetic.memory.free)+last(//keenetic.memory.buffer)+last(//keenetic.memory.cached)))/last(//keenetic.memory.total)*100",
                         "tags": [
                             {
                                 "tag": "application",
