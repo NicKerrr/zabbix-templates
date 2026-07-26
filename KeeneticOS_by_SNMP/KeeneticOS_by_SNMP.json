@@ -15,7 +15,7 @@
                 "description": "KeeneticOS monitoring via SNMP. Collects ICMP/SNMP availability, system information, uptime, CPU load/utilization, memory usage and network interface traffic, status, errors and bandwidth utilization using SNMP walk, dependent items and LLD.\n\nUsed mib:\nUCD-SNMP-MIB\nSNMPv2-MIB\n\nAuthor: Yaroslav Sharaev https://github.com/NicKerrr/zabbix-templates",
                 "vendor": {
                     "name": "Yaroslav Sharaev",
-                    "version": "0.8.1"
+                    "version": "0.8.2"
                 },
                 "groups": [
                     {
@@ -391,7 +391,17 @@
                                 "expression": "min(/KeeneticOS by SNMP/keenetic.cpu.util,5m)>{$CPU.UTIL.MAX}",
                                 "name": "KeeneticOS: High CPU utilization",
                                 "event_name": "KeeneticOS:  High CPU utilization (>{$CPU.UTIL.MAX}% for 5m)",
-                                "priority": "AVERAGE"
+                                "priority": "AVERAGE",
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "capacity"
+                                    },
+                                    {
+                                        "tag": "scope",
+                                        "value": "performance"
+                                    }
+                                ]
                             }
                         ]
                     },
@@ -632,7 +642,17 @@
                                 "expression": "min(/KeeneticOS by SNMP/keenetic.memory.util,5m)>{$MEMORY.UTIL.MAX}",
                                 "name": "KeeneticOS: High memory utilization",
                                 "event_name": "KeeneticOS:  High memory utilization (>{$MEMORY.UTIL.MAX}% for 5m)",
-                                "priority": "AVERAGE"
+                                "priority": "AVERAGE",
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "capacity"
+                                    },
+                                    {
+                                        "tag": "scope",
+                                        "value": "performance"
+                                    }
+                                ]
                             }
                         ]
                     },
@@ -691,7 +711,7 @@
                             {
                                 "type": "DISCARD_UNCHANGED_HEARTBEAT",
                                 "parameters": [
-                                    "10d"
+                                    "1d"
                                 ]
                             }
                         ],
@@ -719,6 +739,12 @@
                                     {
                                         "name": "KeeneticOS: System name has changed",
                                         "expression": "last(/KeeneticOS by SNMP/keenetic.system.name,#1)<>last(/KeeneticOS by SNMP/keenetic.system.name,#2) and length(last(/KeeneticOS by SNMP/keenetic.system.name))>0"
+                                    }
+                                ],
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "notice"
                                     }
                                 ]
                             }
@@ -869,7 +895,18 @@
                                 "expression": "last(/KeeneticOS by SNMP/keenetic.system.name,#1)<>last(/KeeneticOS by SNMP/keenetic.system.name,#2) and length(last(/KeeneticOS by SNMP/keenetic.system.name))>0",
                                 "name": "KeeneticOS: System name has changed",
                                 "event_name": "KeeneticOS: System name has changed (new name: {ITEM.VALUE})",
-                                "priority": "INFO"
+                                "priority": "INFO",
+                                "manual_close": "YES",
+                                "tags": [
+                                    {
+                                        "tag": "scope",
+                                        "value": "notice"
+                                    },
+                                    {
+                                        "tag": "scope",
+                                        "value": "security"
+                                    }
+                                ]
                             }
                         ]
                     },

@@ -452,7 +452,7 @@ Discovery можно настроить через макросы фильтра
 
 ## Статус проекта
 
-Текущая версия шаблона: `0.7`
+Текущая версия шаблона: `0.8.2`
 
 Шаблон находится в процессе практического использования и доработки. Pull requests, issues и предложения приветствуются.
 
@@ -906,6 +906,6 @@ Compatibility depends on KeeneticOS version and the set of SNMP OIDs exposed by 
 
 ## Project Status
 
-Current template version: `0.7`
+Current template version: `0.8.2`
 
 The template is in practical use and under further development. Pull requests, issues and suggestions are welcome.
