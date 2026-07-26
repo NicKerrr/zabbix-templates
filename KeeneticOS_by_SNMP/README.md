@@ -75,12 +75,10 @@
 * Сетевой доступ от Zabbix Server или Zabbix Proxy к SNMP-порту устройства
 * Настроенный SNMP interface на хосте в Zabbix
 * SNMP community или SNMPv3 credentials, в зависимости от настроек устройства
-* MIB-файлы для удобной диагностики:
+* MIB-файлы:
 
   * `UCD-SNMP-MIB.mib`
   * `SNMPv2-MIB.mib`
-
-Важно: шаблон использует числовые OID, поэтому MIB-файлы не обязательны для импорта шаблона. Они нужны для удобной диагностики, проверки OID через `snmpwalk` / `snmptranslate` и ручной отладки SNMP.
 
 ## Настройка SNMP на Keenetic
 
@@ -186,8 +184,6 @@ sudo systemctl restart zabbix-server
 ```bash id="zxzwth"
 sudo systemctl restart zabbix-proxy
 ```
-
-Для самого шаблона это обычно не требуется, так как используются числовые OID. Перезапуск полезен, если вы используете MIB-имена в ручной диагностике или в других SNMP item’ах.
 
 ## Импорт шаблона
 
@@ -529,12 +525,10 @@ Some triggers include dependencies to reduce duplicate alerts. For example, ICMP
 * Network access from Zabbix Server or Zabbix Proxy to the device SNMP port
 * SNMP interface configured on the Zabbix host
 * SNMP community or SNMPv3 credentials, depending on device settings
-* MIB files for easier troubleshooting:
+* MIB files:
 
   * `UCD-SNMP-MIB.mib`
   * `SNMPv2-MIB.mib`
-
-Important: the template uses numeric OIDs, so MIB files are not required for importing the template. They are mainly useful for troubleshooting, OID checks with `snmpwalk` / `snmptranslate` and manual SNMP debugging.
 
 ## Keenetic SNMP Setup
 
@@ -640,8 +634,6 @@ or Zabbix Proxy:
 ```bash id="9nj4lv"
 sudo systemctl restart zabbix-proxy
 ```
-
-This is usually not required for the template itself because numeric OIDs are used. Restarting is useful if you use MIB names in manual diagnostics or other SNMP items.
 
 ## Template Import
 

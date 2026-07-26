@@ -38,7 +38,7 @@
 
 Для шаблона NVR необходимо поместить Python-скрипт в каталог external scripts Zabbix и установить необходимые Python-зависимости.
 
-Для шаблона KeeneticOS необходимо включить SNMP на роутере. Шаблон использует числовые OID, но для диагностики через `snmpwalk` и `snmptranslate` рекомендуется использовать `SNMPv2-MIB.mib` и `UCD-SNMP-MIB.mib`.
+Для шаблона KeeneticOS необходимо включить SNMP на роутере. Шаблон использует OID `SNMPv2-MIB.mib` и `UCD-SNMP-MIB.mib`.
 
 Для шаблона NanoKVM требуется версия image `1.4.0` или выше. SNMP необходимо включить на устройстве вручную через SSH, создав `snmpd.conf` и init-скрипт для запуска `snmpd`. Перед привязкой шаблона проверьте SNMP с Zabbix Server или Zabbix Proxy.
 
@@ -90,7 +90,7 @@ For templates that use external APIs, make sure Zabbix Server or Zabbix Proxy ha
 
 For the NVR template, place the Python script in the Zabbix external scripts directory and install the required Python dependencies.
 
-For the KeeneticOS template, enable SNMP on the router. The template uses numeric OIDs, but `SNMPv2-MIB.mib` and `UCD-SNMP-MIB.mib` are recommended for troubleshooting with `snmpwalk` and `snmptranslate`.
+For the KeeneticOS template, enable SNMP on the router. The template uses numeric OIDs `SNMPv2-MIB.mib` and `UCD-SNMP-MIB.mib`.
 
 For the NanoKVM template, use NanoKVM image version `1.4.0` or later. SNMP must be enabled on the device manually via SSH by creating `snmpd.conf` and an init script for `snmpd`. Check SNMP from Zabbix Server or Zabbix Proxy before linking the template.
 
