@@ -332,7 +332,7 @@ Zabbix 7.0+
 Версия шаблона:
 
 ```text
-0.7.0
+0.7.1
 ```
 
 Совместимость с другими версиями Zabbix или прошивками NanoKVM может требовать дополнительной проверки.
@@ -667,7 +667,7 @@ NanoKVM image version:
 Template version:
 
 ```text
-0.7.0
+0.7.1
 ```
 
 Compatibility with other Zabbix versions or NanoKVM firmware versions may require additional testing.

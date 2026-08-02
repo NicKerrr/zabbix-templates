@@ -15,7 +15,7 @@
                 "description": "Template for monitoring NanoKVM devices via SNMP and ICMP. Collects availability, CPU and memory utilization, uptime, filesystem usage, system information, and network interface metrics.\n\nAuthor: Yaroslav Sharaev https://github.com/NicKerrr/zabbix-templates",
                 "vendor": {
                     "name": "Yaroslav Sharaev",
-                    "version": "0.7.0"
+                    "version": "0.7.1"
                 },
                 "groups": [
                     {
@@ -450,19 +450,13 @@
                     {
                         "uuid": "d1a9af129dbb4fed8e34efcca383aeae",
                         "name": "NanoKVM: Uptime (hardware)",
-                        "type": "DEPENDENT",
+                        "type": "SNMP_AGENT",
+                        "snmp_oid": "get[.1.3.6.1.2.1.1.3.0]",
                         "key": "system.hw.uptime[hrSystemUptime.0]",
                         "history": "7d",
                         "trends": "0",
                         "units": "uptime",
                         "preprocessing": [
-                            {
-                                "type": "SNMP_WALK_VALUE",
-                                "parameters": [
-                                    ".1.3.6.1.2.1.1.3.0",
-                                    "0"
-                                ]
-                            },
                             {
                                 "type": "MULTIPLIER",
                                 "parameters": [
@@ -470,9 +464,6 @@
                                 ]
                             }
                         ],
-                        "master_item": {
-                            "key": "system.info.walk"
-                        },
                         "tags": [
                             {
                                 "tag": "component",
@@ -486,6 +477,7 @@
                         "type": "SNMP_AGENT",
                         "snmp_oid": "walk[.1.3.6.1.2.1.1]",
                         "key": "system.info.walk",
+                        "delay": "1d",
                         "history": "0",
                         "value_type": "TEXT",
                         "tags": [
